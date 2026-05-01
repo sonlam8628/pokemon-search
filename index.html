@@ -1,380 +1,198 @@
 <!DOCTYPE html>
-<html lang="zh-Hant" data-theme="light">
+<html lang="zh-Hant">
 <head>
   <meta charset="UTF-8" />
   <meta name="viewport" content="width=device-width, initial-scale=1.0" />
-  <title>pokemon-jp-card-search-psa</title>
-  <meta name="description" content="支援日文、英文名稱與卡號搜尋日文版 Pokemon 卡牌，並提供 PSA Population、SNKRDUNK、eBay 與 HKD 換算。">
-  <link href="https://api.fontshare.com/v2/css?f[]=satoshi@400,500,700&f[]=general-sans@500,600,700&display=swap" rel="stylesheet">
+  <title>pokemon-simple-search</title>
+  <meta name="description" content="超穩定簡化版 Pokemon 日文卡牌搜尋，只支援日文名稱與英文名稱轉日文搜尋。">
   <style>
-    :root, [data-theme="light"] {
-      --text-xs: clamp(0.75rem, 0.7rem + 0.25vw, 0.875rem);
-      --text-sm: clamp(0.875rem, 0.8rem + 0.35vw, 1rem);
-      --text-base: clamp(1rem, 0.95rem + 0.25vw, 1.125rem);
-      --text-lg: clamp(1.125rem, 1rem + 0.75vw, 1.5rem);
-      --text-xl: clamp(1.5rem, 1.2rem + 1.25vw, 2.25rem);
-      --text-2xl: clamp(2rem, 1.2rem + 2.5vw, 3.5rem);
-
-      --space-1: 0.25rem;
-      --space-2: 0.5rem;
-      --space-3: 0.75rem;
-      --space-4: 1rem;
-      --space-5: 1.25rem;
-      --space-6: 1.5rem;
-      --space-8: 2rem;
-      --space-10: 2.5rem;
-      --space-12: 3rem;
-      --space-16: 4rem;
-
-      --color-bg: #f7f6f2;
-      --color-surface: #fbfbf9;
-      --color-surface-2: #f3f0ec;
-      --color-border: #d4d1ca;
-      --color-divider: #dcd9d5;
-      --color-text: #28251d;
-      --color-text-muted: #6f6a61;
-      --color-text-faint: #9f988d;
-      --color-text-inverse: #f9f8f4;
-      --color-primary: #01696f;
-      --color-primary-hover: #0c4e54;
-      --color-primary-highlight: #dceaea;
-      --color-blue-soft: #e8f1f3;
-      --color-gold-soft: #efe5c7;
-      --shadow-sm: 0 1px 2px rgba(0,0,0,0.05);
-      --shadow-md: 0 10px 30px rgba(0,0,0,0.08);
-      --radius-sm: 0.5rem;
-      --radius-md: 0.875rem;
-      --radius-lg: 1.25rem;
-      --radius-xl: 1.5rem;
-      --radius-full: 9999px;
-      --transition: 180ms cubic-bezier(0.16, 1, 0.3, 1);
-      --content-wide: 1180px;
-      --font-display: "General Sans", "Inter", sans-serif;
-      --font-body: "Satoshi", "Inter", sans-serif;
+    :root {
+      --bg: #f7f6f2;
+      --surface: #fffdf9;
+      --surface-2: #f2eee8;
+      --text: #28251d;
+      --muted: #6f6a61;
+      --border: #d4d1ca;
+      --primary: #01696f;
+      --primary-hover: #0c4e54;
+      --shadow: 0 10px 30px rgba(0,0,0,0.08);
+      --radius: 18px;
     }
 
-    [data-theme="dark"] {
-      --color-bg: #171614;
-      --color-surface: #1c1b19;
-      --color-surface-2: #22211f;
-      --color-border: #393836;
-      --color-divider: #262523;
-      --color-text: #e2dfd9;
-      --color-text-muted: #b5afa5;
-      --color-text-faint: #8b857c;
-      --color-text-inverse: #171614;
-      --color-primary: #4f98a3;
-      --color-primary-hover: #227f8b;
-      --color-primary-highlight: #263638;
-      --color-blue-soft: #202b2d;
-      --color-gold-soft: #403826;
-      --shadow-sm: 0 1px 2px rgba(0,0,0,0.25);
-      --shadow-md: 0 12px 32px rgba(0,0,0,0.35);
-    }
+    * { box-sizing: border-box; }
 
-    @media (prefers-color-scheme: dark) {
-      html:not([data-theme="light"]) {
-        --color-bg: #171614;
-        --color-surface: #1c1b19;
-        --color-surface-2: #22211f;
-        --color-border: #393836;
-        --color-divider: #262523;
-        --color-text: #e2dfd9;
-        --color-text-muted: #b5afa5;
-        --color-text-faint: #8b857c;
-        --color-text-inverse: #171614;
-        --color-primary: #4f98a3;
-        --color-primary-hover: #227f8b;
-        --color-primary-highlight: #263638;
-        --color-blue-soft: #202b2d;
-        --color-gold-soft: #403826;
-        --shadow-sm: 0 1px 2px rgba(0,0,0,0.25);
-        --shadow-md: 0 12px 32px rgba(0,0,0,0.35);
-      }
-    }
-
-    *, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; }
-    html {
-      -webkit-font-smoothing: antialiased;
-      -moz-osx-font-smoothing: grayscale;
-      text-rendering: optimizeLegibility;
-      scroll-behavior: smooth;
-    }
     body {
-      min-height: 100dvh;
-      font-family: var(--font-body);
-      font-size: var(--text-base);
-      line-height: 1.6;
-      color: var(--color-text);
-      background:
-        radial-gradient(circle at top right, color-mix(in oklab, var(--color-primary) 10%, transparent), transparent 24%),
-        linear-gradient(180deg, var(--color-bg), var(--color-surface-2));
+      margin: 0;
+      font-family: Arial, sans-serif;
+      background: linear-gradient(180deg, #faf8f4, var(--bg));
+      color: var(--text);
     }
-    img, picture, video, svg, canvas { display: block; max-width: 100%; height: auto; }
-    button, input, select { font: inherit; color: inherit; }
-    a, button, input, select {
-      transition:
-        color var(--transition),
-        background var(--transition),
-        border-color var(--transition),
-        box-shadow var(--transition),
-        transform var(--transition);
+
+    img {
+      display: block;
+      max-width: 100%;
+      height: auto;
     }
-    :focus-visible {
-      outline: 2px solid var(--color-primary);
-      outline-offset: 3px;
-      border-radius: var(--radius-sm);
-    }
-    .skip-link {
-      position: absolute;
-      top: -100px;
-      left: var(--space-4);
-      background: var(--color-primary);
-      color: var(--color-text-inverse);
-      padding: var(--space-3) var(--space-4);
-      border-radius: var(--radius-full);
-      z-index: 50;
-      text-decoration: none;
-    }
-    .skip-link:focus { top: var(--space-4); }
 
     .wrap {
-      width: min(calc(100% - 24px), var(--content-wide));
-      margin-inline: auto;
-      padding-block: clamp(var(--space-6), 5vw, var(--space-12));
+      width: min(1100px, calc(100% - 24px));
+      margin: 0 auto;
+      padding: 24px 0 48px;
     }
 
-    .shell,
-    .panel,
-    .modal-card {
-      background: color-mix(in oklab, var(--color-surface) 94%, transparent);
-      border: 1px solid color-mix(in oklab, var(--color-text) 12%, transparent);
-      box-shadow: var(--shadow-md);
-      backdrop-filter: blur(8px);
-    }
-
-    .shell {
-      border-radius: var(--radius-xl);
-      overflow: hidden;
-    }
-
-    .topbar {
-      display: flex;
-      justify-content: space-between;
-      align-items: center;
-      gap: var(--space-4);
-      padding: var(--space-4) var(--space-5);
-      border-bottom: 1px solid var(--color-divider);
-      background: color-mix(in oklab, var(--color-surface) 90%, transparent);
-    }
-
-    .brand {
-      display: inline-flex;
-      align-items: center;
-      gap: var(--space-3);
-      min-height: 44px;
-    }
-
-    .brand svg {
-      width: 36px;
-      height: 36px;
-      color: var(--color-primary);
-      flex: 0 0 auto;
-    }
-
-    .brand-text strong {
-      display: block;
-      font-family: var(--font-display);
-      font-size: var(--text-sm);
-      letter-spacing: 0.02em;
-    }
-
-    .brand-text span {
-      display: block;
-      color: var(--color-text-muted);
-      font-size: var(--text-xs);
-    }
-
-    .theme-btn,
-    .main-btn,
-    .link-btn {
-      min-height: 44px;
-      border-radius: var(--radius-full);
-      border: 1px solid color-mix(in oklab, var(--color-text) 12%, transparent);
-      background: var(--color-surface);
-      padding: 0 var(--space-4);
-      cursor: pointer;
-      text-decoration: none;
-      display: inline-flex;
-      align-items: center;
-      justify-content: center;
-      gap: var(--space-2);
-      box-shadow: var(--shadow-sm);
-    }
-
-    .theme-btn:hover,
-    .main-btn:hover,
-    .link-btn:hover {
-      transform: translateY(-1px);
-      border-color: color-mix(in oklab, var(--color-primary) 24%, var(--color-border));
-    }
-
-    .main-btn.primary {
-      background: var(--color-primary);
-      color: var(--color-text-inverse);
-      border-color: var(--color-primary);
-    }
-    .main-btn.primary:hover {
-      background: var(--color-primary-hover);
-      border-color: var(--color-primary-hover);
+    .hero,
+    .panel {
+      background: rgba(255, 253, 249, 0.95);
+      border: 1px solid var(--border);
+      border-radius: 24px;
+      box-shadow: var(--shadow);
     }
 
     .hero {
-      padding: clamp(var(--space-5), 4vw, var(--space-8));
-      display: grid;
-      gap: var(--space-6);
-      background:
-        linear-gradient(180deg, color-mix(in oklab, var(--color-primary) 6%, var(--color-surface)), var(--color-surface));
-    }
-
-    .hero-copy {
-      display: grid;
-      gap: var(--space-3);
-      max-width: 74ch;
-    }
-
-    .eyebrow {
-      display: inline-flex;
-      width: fit-content;
-      align-items: center;
-      gap: var(--space-2);
-      padding: var(--space-2) var(--space-3);
-      border-radius: var(--radius-full);
-      background: var(--color-primary-highlight);
-      color: var(--color-primary);
-      font-size: var(--text-xs);
-      font-weight: 700;
-      letter-spacing: 0.04em;
+      padding: 24px;
+      margin-bottom: 20px;
     }
 
     h1 {
-      font-family: var(--font-display);
-      font-size: var(--text-2xl);
-      line-height: 1.05;
-      letter-spacing: -0.03em;
-      max-width: 16ch;
+      margin: 0 0 10px;
+      font-size: clamp(28px, 5vw, 42px);
+      line-height: 1.08;
     }
 
-    .hero-copy p {
-      color: var(--color-text-muted);
-      max-width: 70ch;
+    .sub {
+      margin: 0 0 18px;
+      color: var(--muted);
+      line-height: 1.7;
+      max-width: 760px;
     }
 
-    .search-form {
+    .form-grid {
       display: grid;
-      gap: var(--space-4);
-    }
-
-    .search-grid {
-      display: grid;
-      grid-template-columns: 1.35fr 0.75fr;
-      gap: var(--space-4);
+      grid-template-columns: 1.2fr 0.7fr;
+      gap: 12px;
+      margin-bottom: 12px;
     }
 
     .field {
-      display: grid;
-      gap: var(--space-2);
+      display: flex;
+      flex-direction: column;
+      gap: 6px;
     }
 
     label {
-      font-size: var(--text-sm);
-      color: var(--color-text-muted);
+      font-size: 14px;
+      color: var(--muted);
       font-weight: 700;
+    }
+
+    input,
+    select,
+    button,
+    a {
+      font: inherit;
     }
 
     input,
     select {
       width: 100%;
-      min-height: 50px;
-      border-radius: var(--radius-md);
-      border: 1px solid color-mix(in oklab, var(--color-text) 12%, transparent);
-      background: var(--color-surface);
-      padding: 0 var(--space-4);
+      min-height: 48px;
+      border-radius: 14px;
+      border: 1px solid var(--border);
+      padding: 12px 14px;
+      background: #fff;
+      color: var(--text);
     }
 
-    input::placeholder { color: var(--color-text-faint); }
-
-    .action-row,
-    .helper-row {
+    .actions {
       display: flex;
       flex-wrap: wrap;
-      gap: var(--space-3);
-      align-items: center;
+      gap: 10px;
     }
 
-    .helper-row {
-      color: var(--color-text-muted);
-      font-size: var(--text-sm);
+    .btn,
+    .link-btn {
+      min-height: 44px;
+      border-radius: 999px;
+      border: 1px solid var(--border);
+      background: #fff;
+      color: var(--text);
+      padding: 10px 16px;
+      cursor: pointer;
+      text-decoration: none;
+      display: inline-flex;
+      align-items: center;
+      justify-content: center;
+    }
+
+    .btn.primary {
+      background: var(--primary);
+      border-color: var(--primary);
+      color: #fff;
+    }
+
+    .btn.primary:hover {
+      background: var(--primary-hover);
+      border-color: var(--primary-hover);
+    }
+
+    .tips {
+      margin-top: 12px;
+      color: var(--muted);
+      font-size: 14px;
+      line-height: 1.7;
     }
 
     .panel {
-      border-radius: var(--radius-xl);
-      padding: clamp(var(--space-5), 4vw, var(--space-6));
-      margin-top: var(--space-5);
+      padding: 22px;
     }
 
-    .panel-head {
+    .bar {
       display: flex;
       justify-content: space-between;
-      align-items: start;
-      gap: var(--space-4);
+      align-items: flex-start;
+      gap: 12px;
       flex-wrap: wrap;
-      margin-bottom: var(--space-5);
+      margin-bottom: 16px;
     }
 
-    .panel-head h2 {
-      font-family: var(--font-display);
-      font-size: var(--text-xl);
-      line-height: 1.1;
+    .bar h2 {
+      margin: 0;
+      font-size: 20px;
     }
 
     .status {
-      color: var(--color-text-muted);
-      font-size: var(--text-sm);
-      max-width: 70ch;
+      color: var(--muted);
+      font-size: 14px;
+      line-height: 1.6;
+      max-width: 700px;
+      word-break: break-word;
     }
 
     .cards {
       display: grid;
-      grid-template-columns: repeat(auto-fill, minmax(min(240px, 100%), 1fr));
-      gap: var(--space-4);
-      content-visibility: auto;
+      grid-template-columns: repeat(auto-fill, minmax(220px, 1fr));
+      gap: 16px;
     }
 
     .card {
-      display: grid;
-      grid-template-rows: auto 1fr;
-      background: var(--color-surface);
-      border: 1px solid color-mix(in oklab, var(--color-text) 10%, transparent);
-      border-radius: var(--radius-lg);
+      background: #fff;
+      border: 1px solid var(--border);
+      border-radius: var(--radius);
       overflow: hidden;
-      box-shadow: var(--shadow-sm);
+      display: flex;
+      flex-direction: column;
       min-height: 100%;
     }
 
-    .card-thumb {
-      width: 100%;
-      border: 0;
-      background:
-        linear-gradient(180deg, color-mix(in oklab, var(--color-primary) 7%, var(--color-surface)), var(--color-surface));
-      padding: var(--space-4);
+    .thumb {
+      background: linear-gradient(180deg, #eef6f6, #fff);
+      padding: 14px;
       aspect-ratio: 3 / 4;
       display: grid;
       place-items: center;
-      cursor: pointer;
     }
 
-    .card-thumb img {
+    .thumb img {
       max-height: 100%;
       object-fit: contain;
     }
@@ -382,459 +200,153 @@
     .fallback {
       width: 100%;
       height: 100%;
-      border-radius: calc(var(--radius-lg) - var(--space-4));
-      border: 1px dashed color-mix(in oklab, var(--color-text) 14%, transparent);
+      border: 1px dashed var(--border);
+      border-radius: 12px;
       display: grid;
       place-items: center;
       text-align: center;
-      padding: var(--space-4);
-      color: var(--color-text-muted);
-      background: var(--color-surface-2);
-      font-size: var(--text-sm);
+      color: var(--muted);
+      padding: 12px;
+      background: #faf8f4;
+      font-size: 14px;
     }
 
     .meta {
-      padding: var(--space-4);
+      padding: 14px;
       display: grid;
-      gap: var(--space-3);
-      align-content: start;
+      gap: 8px;
     }
 
     .meta h3 {
-      font-size: var(--text-lg);
-      line-height: 1.2;
-      font-family: var(--font-display);
-      letter-spacing: -0.02em;
+      margin: 0;
+      font-size: 17px;
+      line-height: 1.3;
     }
 
     .small {
-      font-size: var(--text-sm);
-      color: var(--color-text-muted);
+      color: var(--muted);
+      font-size: 14px;
+      line-height: 1.6;
       word-break: break-word;
     }
 
     .badges {
       display: flex;
       flex-wrap: wrap;
-      gap: var(--space-2);
+      gap: 8px;
     }
 
     .badge {
-      padding: 0.45rem 0.75rem;
-      border-radius: var(--radius-full);
-      font-size: var(--text-xs);
-      background: var(--color-blue-soft);
-      color: var(--color-text);
-      border: 1px solid color-mix(in oklab, var(--color-primary) 10%, transparent);
+      padding: 6px 10px;
+      border-radius: 999px;
+      background: #e8f1f3;
+      font-size: 12px;
     }
 
-    .badge.psa {
-      background: var(--color-gold-soft);
+    .links {
+      display: flex;
+      flex-wrap: wrap;
+      gap: 8px;
+      margin-top: 2px;
     }
 
     .empty {
-      border: 1px dashed color-mix(in oklab, var(--color-text) 16%, transparent);
-      border-radius: var(--radius-lg);
-      background: var(--color-surface);
-      padding: var(--space-10) var(--space-5);
+      border: 1px dashed var(--border);
+      border-radius: 16px;
+      padding: 28px;
       text-align: center;
-      color: var(--color-text-muted);
+      color: var(--muted);
+      background: #fff;
       line-height: 1.7;
-    }
-
-    .more-wrap {
-      display: flex;
-      justify-content: center;
-      margin-top: var(--space-6);
     }
 
     .footnote {
-      margin-top: var(--space-5);
-      color: var(--color-text-muted);
-      font-size: var(--text-xs);
+      margin-top: 14px;
+      color: var(--muted);
+      font-size: 13px;
       line-height: 1.7;
     }
 
-    .modal {
-      position: fixed;
-      inset: 0;
-      background: rgba(0,0,0,0.72);
-      display: none;
-      align-items: center;
-      justify-content: center;
-      padding: var(--space-4);
-      z-index: 40;
-      overflow-y: auto;
-    }
-
-    .modal.open { display: flex; }
-
-    .modal-card {
-      width: min(1040px, 100%);
-      border-radius: var(--radius-xl);
-      padding: var(--space-5);
-      display: grid;
-      grid-template-columns: minmax(240px, 330px) 1fr;
-      gap: var(--space-5);
-      position: relative;
-      margin: auto;
-      background: var(--color-surface);
-    }
-
-    .modal-card img {
-      width: 100%;
-      border-radius: var(--radius-lg);
-      border: 1px solid color-mix(in oklab, var(--color-text) 10%, transparent);
-      background:
-        linear-gradient(180deg, color-mix(in oklab, var(--color-primary) 7%, var(--color-surface)), var(--color-surface));
-      object-fit: contain;
-    }
-
-    .modal-close {
-      position: absolute;
-      top: var(--space-4);
-      right: var(--space-4);
-      width: 44px;
-      height: 44px;
-      border-radius: var(--radius-full);
-      border: 1px solid color-mix(in oklab, white 16%, transparent);
-      background: rgba(0,0,0,0.75);
-      color: white;
-      cursor: pointer;
-    }
-
-    .detail {
-      display: grid;
-      gap: var(--space-2);
-      align-content: start;
-      padding-right: var(--space-8);
-    }
-
-    .detail h3 {
-      font-family: var(--font-display);
-      font-size: var(--text-xl);
-      line-height: 1.06;
-      letter-spacing: -0.03em;
-    }
-
-    .line {
-      color: var(--color-text-muted);
-      word-break: break-word;
-    }
-
-    .price-panel {
-      margin-top: var(--space-4);
-      border: 1px solid color-mix(in oklab, var(--color-text) 10%, transparent);
-      border-radius: var(--radius-lg);
-      padding: var(--space-4);
-      background: color-mix(in oklab, var(--color-primary) 4%, var(--color-surface));
-      display: grid;
-      gap: var(--space-4);
-    }
-
-    .price-panel h4 {
-      font-size: var(--text-lg);
-      font-family: var(--font-display);
-    }
-
-    .price-links {
-      display: flex;
-      flex-wrap: wrap;
-      gap: var(--space-3);
-    }
-
-    .psa-box {
-      display: grid;
-      gap: var(--space-3);
-      padding: var(--space-4);
-      border-radius: var(--radius-md);
-      border: 1px solid color-mix(in oklab, var(--color-text) 10%, transparent);
-      background: color-mix(in oklab, var(--color-primary) 3%, var(--color-surface));
-    }
-
-    .psa-query {
-      font-size: var(--text-sm);
-      line-height: 1.7;
-      color: var(--color-text);
-      background: var(--color-surface);
-      border: 1px solid color-mix(in oklab, var(--color-text) 10%, transparent);
-      border-radius: var(--radius-md);
-      padding: var(--space-3);
-      word-break: break-word;
-    }
-
-    .converter-grid {
-      display: grid;
-      grid-template-columns: repeat(2, minmax(0, 1fr));
-      gap: var(--space-4);
-    }
-
-    .result-box {
-      border-radius: var(--radius-md);
-      background: var(--color-surface);
-      border: 1px solid color-mix(in oklab, var(--color-text) 10%, transparent);
-      padding: var(--space-4);
-      font-size: var(--text-sm);
-      line-height: 1.6;
-    }
-
-    .result-box strong {
-      display: block;
-      margin-bottom: var(--space-1);
-      font-size: var(--text-sm);
-    }
-
-    .price-note {
-      color: var(--color-text-muted);
-      font-size: var(--text-xs);
-      line-height: 1.7;
-    }
-
-    @media (max-width: 860px) {
-      .search-grid,
-      .modal-card,
-      .converter-grid {
+    @media (max-width: 820px) {
+      .form-grid {
         grid-template-columns: 1fr;
       }
-      .detail { padding-right: 0; }
     }
 
-    @media (max-width: 560px) {
-      .wrap { width: min(calc(100% - 16px), var(--content-wide)); }
-      .topbar,
-      .hero,
-      .panel { padding-inline: var(--space-4); }
-      .cards { grid-template-columns: 1fr; }
-      h1 { max-width: 12ch; }
-    }
-
-    @media (prefers-reduced-motion: reduce) {
-      *, *::before, *::after {
-        animation-duration: 0.01ms !important;
-        animation-iteration-count: 1 !important;
-        transition-duration: 0.01ms !important;
-        scroll-behavior: auto !important;
+    @media (max-width: 520px) {
+      .wrap {
+        width: min(100% - 16px, 1100px);
+      }
+      .cards {
+        grid-template-columns: 1fr;
       }
     }
   </style>
 </head>
 <body>
-  <a href="#main" class="skip-link">跳到內容</a>
-
   <div class="wrap">
-    <div class="shell">
-      <header class="topbar">
-        <div class="brand" aria-label="Pokemon 日文卡牌搜尋">
-          <svg viewBox="0 0 64 64" fill="none" aria-hidden="true">
-            <circle cx="32" cy="32" r="23" stroke="currentColor" stroke-width="4"></circle>
-            <path d="M10 32H54" stroke="currentColor" stroke-width="4" stroke-linecap="round"></path>
-            <circle cx="32" cy="32" r="7" fill="currentColor"></circle>
-          </svg>
-          <div class="brand-text">
-            <strong>Pokemon JP Card Search + PSA</strong>
-            <span>日文卡片名稱 / 英文名稱 / 卡號搜尋</span>
+    <section class="hero">
+      <h1>Pokemon 日文卡牌搜尋</h1>
+      <p class="sub">
+        這是超穩定簡化版：只做最穩的名稱搜尋。你可以輸入日文名稱，或輸入英文 Pokémon 名稱後先轉成日文，再去查日文版卡片資料。
+      </p>
+
+      <form id="searchForm">
+        <div class="form-grid">
+          <div class="field">
+            <label for="keyword">輸入日文名稱 / 英文 Pokémon 名稱</label>
+            <input id="keyword" type="text" placeholder="例如 ピカチュウ / Pikachu" autocomplete="off" />
+          </div>
+
+          <div class="field">
+            <label for="sortMode">排列方式</label>
+            <select id="sortMode">
+              <option value="latest">新至舊</option>
+              <option value="oldest">舊至新</option>
+            </select>
           </div>
         </div>
 
-        <button class="theme-btn" type="button" data-theme-toggle aria-label="切換深色模式">
-          <span aria-hidden="true">◐</span>
-        </button>
-      </header>
-
-      <main id="main">
-        <section class="hero">
-          <div class="hero-copy">
-            <div class="eyebrow">With PSA helper</div>
-            <h1>日文卡搜尋，加上 PSA Population 搜尋入口。</h1>
-            <p>這版維持日文卡片搜尋為主，並在卡片詳情加入 PSA Population 官方搜尋按鈕與建議搜尋字串，方便你快速跳轉查 pop report。</p>
-          </div>
-
-          <form id="searchForm" class="search-form">
-            <div class="search-grid">
-              <div class="field">
-                <label for="keyword">輸入日文 / 英文名稱 / 卡號</label>
-                <input id="keyword" type="text" placeholder="例如 ピカチュウ / Pikachu / 001/030 / SV-P 001" autocomplete="off" />
-              </div>
-
-              <div class="field">
-                <label for="sortMode">排列方式</label>
-                <select id="sortMode">
-                  <option value="latest">新至舊</option>
-                  <option value="oldest">舊至新</option>
-                </select>
-              </div>
-            </div>
-
-            <div class="action-row">
-              <button class="main-btn primary" type="submit">開始搜尋</button>
-              <button class="main-btn" type="button" data-fill="Pikachu">Pikachu</button>
-              <button class="main-btn" type="button" data-fill="ピカチュウ">ピカチュウ</button>
-              <button class="main-btn" type="button" data-fill="SV-P 001">SV-P 001</button>
-              <button class="main-btn" type="button" id="clearBtn">清空</button>
-            </div>
-
-            <div class="helper-row">
-              <span>英文名會先轉日文名，再用 TCGdex 日文 cards 端點搜尋。</span>
-              <span>PSA 目前先用官方 population 搜尋頁，這樣最穩。</span>
-            </div>
-          </form>
-        </section>
-      </main>
-    </div>
-
-    <section class="panel" aria-live="polite">
-      <div class="panel-head">
-        <div>
-          <h2>搜尋結果</h2>
+        <div class="actions">
+          <button class="btn primary" type="submit">開始搜尋</button>
+          <button class="btn" type="button" data-fill="ピカチュウ">ピカチュウ</button>
+          <button class="btn" type="button" data-fill="Pikachu">Pikachu</button>
+          <button class="btn" type="button" id="clearBtn">清空</button>
         </div>
+      </form>
+
+      <div class="tips">
+        這版不做卡號搜尋、不做 PSA、不做大圖 modal，目的就是先保證 GitHub Pages 上能穩定顯示結果。
+      </div>
+    </section>
+
+    <section class="panel">
+      <div class="bar">
+        <h2>搜尋結果</h2>
         <div class="status" id="status">尚未搜尋。</div>
       </div>
 
       <div id="resultsArea">
-        <div class="empty">請輸入日文、英文名稱或卡號。</div>
+        <div class="empty">請輸入日文名稱或英文 Pokémon 名稱。</div>
       </div>
 
       <div class="footnote">
-        TCGdex 文件說明 cards 端點支援 filtering、sorting、pagination，而 PSA 官方則提供 Population Report 搜尋頁與 Public API 文件；因此這版先把 PSA 做成官方搜尋入口，避免直接前端抓資料時遇到授權或 CORS 問題。[web:44][web:308][web:379][web:391]
+        TCGdex 文件說明 cards 陣列端點可使用 filtering、sorting、pagination，而 `name=value` 會做包含搜尋，因此這版直接用 `name=` 查日文卡片，盡量降低前端複雜度。[page:1][page:2]
       </div>
     </section>
   </div>
 
-  <div class="modal" id="modal" aria-hidden="true">
-    <div class="modal-card">
-      <button class="modal-close" id="modalClose" aria-label="關閉">✕</button>
-
-      <img id="modalImg" src="" alt="Pokemon 卡牌大圖" width="330" height="460" />
-
-      <div class="detail">
-        <h3 id="modalTitle">卡片名稱</h3>
-        <div class="line" id="modalSet"></div>
-        <div class="line" id="modalNumber"></div>
-        <div class="line" id="modalYear"></div>
-        <div class="line" id="modalTypeDetail"></div>
-        <div class="line" id="modalRarityDetail"></div>
-        <div class="line" id="modalSpecialTag"></div>
-        <div class="line" id="modalIllustrator"></div>
-        <div class="line" id="modalResolvedName"></div>
-
-        <div class="price-panel">
-          <h4>價格與 PSA 參考</h4>
-
-          <div class="price-links">
-            <a class="link-btn" id="ebayLink" href="#" target="_blank" rel="noopener noreferrer">打開 eBay 搜尋</a>
-            <a class="link-btn" id="snkrdunkLink" href="#" target="_blank" rel="noopener noreferrer">打開 SNKRDUNK 搜尋</a>
-            <a class="link-btn" id="psaPopLink" href="#" target="_blank" rel="noopener noreferrer">打開 PSA Population</a>
-          </div>
-
-          <div class="psa-box">
-            <div class="badges">
-              <span class="badge psa">PSA Search Helper</span>
-            </div>
-            <div class="small">建議搜尋字串</div>
-            <div class="psa-query" id="psaQueryText">尚未產生</div>
-          </div>
-
-          <div class="converter-grid">
-            <div class="field">
-              <label for="usdPrice">USD 價格參考</label>
-              <input id="usdPrice" type="number" min="0" step="0.01" placeholder="例如 25.5" />
-            </div>
-            <div class="field">
-              <label for="jpyPrice">JPY 價格參考</label>
-              <input id="jpyPrice" type="number" min="0" step="1" placeholder="例如 3980" />
-            </div>
-          </div>
-
-          <div class="converter-grid">
-            <div class="field">
-              <label for="usdToHkdRate">USD → HKD 匯率</label>
-              <input id="usdToHkdRate" type="number" min="0" step="0.0001" value="7.80" />
-            </div>
-            <div class="field">
-              <label for="jpyToHkdRate">JPY → HKD 匯率</label>
-              <input id="jpyToHkdRate" type="number" min="0" step="0.0001" value="0.052" />
-            </div>
-          </div>
-
-          <div class="action-row">
-            <button class="main-btn" type="button" id="calcPriceBtn">計算 HKD</button>
-          </div>
-
-          <div class="converter-grid">
-            <div class="result-box">
-              <strong>USD 估算 HKD</strong>
-              <div id="usdHkdResult">尚未計算</div>
-            </div>
-            <div class="result-box">
-              <strong>JPY 估算 HKD</strong>
-              <div id="jpyHkdResult">尚未計算</div>
-            </div>
-          </div>
-
-          <div class="price-note">
-            PSA 目前是官方 Population 搜尋連結，不是即時數據回傳。
-          </div>
-        </div>
-      </div>
-    </div>
-  </div>
-
   <script>
-    (function () {
-      const root = document.documentElement;
-      const themeBtn = document.querySelector('[data-theme-toggle]');
-      let theme = window.matchMedia('(prefers-color-scheme: dark)').matches ? 'dark' : 'light';
-      root.setAttribute('data-theme', theme);
-      themeBtn?.addEventListener('click', () => {
-        theme = theme === 'dark' ? 'light' : 'dark';
-        root.setAttribute('data-theme', theme);
-      });
-    })();
-
     const keywordInput = document.getElementById('keyword');
     const sortMode = document.getElementById('sortMode');
     const searchForm = document.getElementById('searchForm');
+    const clearBtn = document.getElementById('clearBtn');
     const statusEl = document.getElementById('status');
     const resultsArea = document.getElementById('resultsArea');
-    const clearBtn = document.getElementById('clearBtn');
-
-    const modal = document.getElementById('modal');
-    const modalClose = document.getElementById('modalClose');
-    const modalImg = document.getElementById('modalImg');
-    const modalTitle = document.getElementById('modalTitle');
-    const modalSet = document.getElementById('modalSet');
-    const modalNumber = document.getElementById('modalNumber');
-    const modalYear = document.getElementById('modalYear');
-    const modalTypeDetail = document.getElementById('modalTypeDetail');
-    const modalRarityDetail = document.getElementById('modalRarityDetail');
-    const modalSpecialTag = document.getElementById('modalSpecialTag');
-    const modalIllustrator = document.getElementById('modalIllustrator');
-    const modalResolvedName = document.getElementById('modalResolvedName');
-
-    const ebayLink = document.getElementById('ebayLink');
-    const snkrdunkLink = document.getElementById('snkrdunkLink');
-    const psaPopLink = document.getElementById('psaPopLink');
-    const psaQueryText = document.getElementById('psaQueryText');
-
-    const usdPrice = document.getElementById('usdPrice');
-    const jpyPrice = document.getElementById('jpyPrice');
-    const usdToHkdRate = document.getElementById('usdToHkdRate');
-    const jpyToHkdRate = document.getElementById('jpyToHkdRate');
-    const calcPriceBtn = document.getElementById('calcPriceBtn');
-    const usdHkdResult = document.getElementById('usdHkdResult');
-    const jpyHkdResult = document.getElementById('jpyHkdResult');
 
     let currentCards = [];
     let currentEnglishName = '';
     let currentJapaneseName = '';
-    let currentRawKeyword = '';
-    let lastSearchMode = '';
-    let pageOffset = 0;
-    let canLoadMore = false;
-
-    const NAME_PAGE_SIZE = 60;
-    const CARD_SCAN_PAGE_SIZE = 120;
-    const CARD_SCAN_MAX_PAGES = 8;
 
     function escapeHtml(str = '') {
       return String(str).replace(/[&<>'"]/g, char => ({
@@ -847,27 +359,11 @@
     }
 
     function normalizeText(value) {
-      return String(value || '')
-        .trim()
-        .toLowerCase()
-        .replace(/\s+/g, ' ');
-    }
-
-    function compactText(value) {
-      return normalizeText(value).replace(/[\s-]+/g, '');
+      return String(value || '').trim().toLowerCase();
     }
 
     function isJapaneseText(text) {
       return /[\u3040-\u30ff\u3400-\u4dbf\u4e00-\u9fff]/.test(text);
-    }
-
-    function looksLikeCardNumber(input) {
-      const value = String(input || '').trim();
-      return /[0-9]/.test(value) && (
-        value.includes('/') ||
-        /^[A-Za-z]{1,8}[-\s]?[A-Za-z0-9]*\s?\d+$/i.test(value) ||
-        /^\d{1,3}$/.test(value)
-      );
     }
 
     function getCardName(card) {
@@ -891,61 +387,15 @@
       return /^\d{4}-\d{2}-\d{2}$/.test(date) ? date.slice(0, 4) : '未標示';
     }
 
-    function getCardTypeDetail(card) {
-      if (card.category === 'Trainer') {
-        return card.trainerType ? `Trainer / ${card.trainerType}` : 'Trainer';
-      }
-      if (card.category === 'Energy') {
-        return card.energyType ? `Energy / ${card.energyType}` : 'Energy';
-      }
-      return card.category || card.supertype || '未標示';
-    }
-
-    function getPromoHint(card) {
-      const rarity = String(card.rarity || '').toLowerCase();
-      const setName = String(card.set?.name || '').toLowerCase();
-      const setId = String(card.set?.id || '').toLowerCase();
-      const localId = String(card.localId || '').toLowerCase();
-      if (rarity.includes('promo') || setName.includes('promo') || setId.includes('promo') || localId.includes('promo')) {
-        return 'Promo';
-      }
-      return '';
-    }
-
-    function buildHints(card) {
-      const hints = [];
-      hints.push(`推出年份：${getReleaseYear(card)}`);
-      hints.push(`卡片種類：${getCardTypeDetail(card)}`);
-      hints.push(`稀有度：${card.rarity || '未標示'}`);
-      const promo = getPromoHint(card);
-      if (promo) hints.push(`特別標示：${promo}`);
-      return hints;
-    }
-
     function parseCardNumber(value) {
       const str = String(value || '');
       const m = str.match(/\d+/);
       return m ? Number(m[0]) : Number.MAX_SAFE_INTEGER;
     }
 
-    function matchCardNumber(card, query) {
-      const q = compactText(query);
-      const localId = compactText(card.localId || '');
-      const id = compactText(card.id || '');
-      return localId.includes(q) || id.includes(q);
-    }
-
-    function dedupeCards(cards) {
-      const map = new Map();
-      for (const card of cards) {
-        const key = card.id || `${card.set?.id || ''}-${card.localId || getCardName(card)}`;
-        if (!map.has(key)) map.set(key, card);
-      }
-      return [...map.values()];
-    }
-
     function sortCards(cards, mode) {
       const copied = [...cards];
+
       if (mode === 'oldest') {
         copied.sort((a, b) => {
           const aDate = new Date(a.set?.releaseDate || a.releaseDate || '2999-12-31').getTime();
@@ -955,6 +405,7 @@
         });
         return copied;
       }
+
       copied.sort((a, b) => {
         const aDate = new Date(a.set?.releaseDate || a.releaseDate || '1900-01-01').getTime();
         const bDate = new Date(b.set?.releaseDate || b.releaseDate || '1900-01-01').getTime();
@@ -965,185 +416,69 @@
     }
 
     async function safeJsonFetch(url) {
-      const response = await fetch(url, { headers: { 'Accept': 'application/json' } });
+      const response = await fetch(url, {
+        headers: { 'Accept': 'application/json' }
+      });
+
       if (!response.ok) {
         throw new Error(`API 請求失敗：${response.status}`);
       }
+
       return await response.json();
     }
 
     async function resolveEnglishToJapaneseName(englishName) {
       const base = normalizeText(englishName);
-      const directUrl = `https://pokeapi.co/api/v2/pokemon-species/${encodeURIComponent(base)}`;
-      try {
-        const data = await safeJsonFetch(directUrl);
-        const names = data.names || [];
-        const ja = names.find(item => item.language && (item.language.name === 'ja' || item.language.name === 'ja-Hrkt'));
-        if (ja?.name) return ja.name;
-      } catch (error) {}
-
-      const searchUrl = `https://pokeapi.co/api/v2/pokemon-species?limit=2000`;
-      const listData = await safeJsonFetch(searchUrl);
-      const match = (listData.results || []).find(item => normalizeText(item.name) === base);
-      if (!match?.url) {
-        throw new Error(`找不到英文 Pokémon 名稱：${englishName}`);
-      }
-      const speciesData = await safeJsonFetch(match.url);
-      const names = speciesData.names || [];
+      const url = `https://pokeapi.co/api/v2/pokemon-species/${encodeURIComponent(base)}`;
+      const data = await safeJsonFetch(url);
+      const names = data.names || [];
       const ja = names.find(item => item.language && (item.language.name === 'ja' || item.language.name === 'ja-Hrkt'));
-      if (!ja?.name) {
+
+      if (!ja || !ja.name) {
         throw new Error(`找不到 ${englishName} 的日文名稱`);
       }
+
       return ja.name;
     }
 
-    async function fetchJapaneseCardsByName(japaneseName, offset = 0, itemsPerPage = NAME_PAGE_SIZE) {
+    async function fetchJapaneseCardsByName(japaneseName) {
       const url = new URL('https://api.tcgdex.net/v2/ja/cards');
       url.searchParams.set('name', japaneseName);
+      url.searchParams.set('pagination:page', '1');
+      url.searchParams.set('pagination:itemsPerPage', '60');
       url.searchParams.set('sort:field', 'releaseDate');
       url.searchParams.set('sort:order', sortMode.value === 'oldest' ? 'ASC' : 'DESC');
-      url.searchParams.set('pagination:itemsPerPage', String(itemsPerPage));
-      url.searchParams.set('pagination:offset', String(offset));
+
       const data = await safeJsonFetch(url.toString());
       return Array.isArray(data) ? data : (data.cards || data.data || []);
-    }
-
-    async function fetchJapaneseCardsPage(offset = 0, itemsPerPage = CARD_SCAN_PAGE_SIZE) {
-      const url = new URL('https://api.tcgdex.net/v2/ja/cards');
-      url.searchParams.set('sort:field', 'releaseDate');
-      url.searchParams.set('sort:order', 'DESC');
-      url.searchParams.set('pagination:itemsPerPage', String(itemsPerPage));
-      url.searchParams.set('pagination:offset', String(offset));
-      const data = await safeJsonFetch(url.toString());
-      return Array.isArray(data) ? data : (data.cards || data.data || []);
-    }
-
-    async function searchByCardNumber(query) {
-      let results = [];
-      for (let i = 0; i < CARD_SCAN_MAX_PAGES; i += 1) {
-        const offset = i * CARD_SCAN_PAGE_SIZE;
-        statusEl.textContent = `正在掃描卡號：${query}（第 ${i + 1} 批）`;
-        const page = await fetchJapaneseCardsPage(offset, CARD_SCAN_PAGE_SIZE);
-        if (!page.length) break;
-        results = results.concat(page.filter(card => matchCardNumber(card, query)));
-        if (page.length < CARD_SCAN_PAGE_SIZE) break;
-      }
-      return dedupeCards(results);
-    }
-
-    function buildPsaSearchQuery(card) {
-      const year = getReleaseYear(card);
-      const englishOrCurrent = currentEnglishName || getCardName(card);
-      const cardNo = card.localId || '';
-      const setName = card.set?.name || '';
-      return [year !== '未標示' ? year : '', englishOrCurrent, cardNo, setName]
-        .filter(Boolean)
-        .join(' ');
-    }
-
-    function updatePriceLinks(card) {
-      const jpName = getCardName(card);
-      const cardNo = card.localId || card.id || '';
-      const setName = card.set?.name || '';
-
-      const ebayQuery = encodeURIComponent([
-        currentEnglishName || currentRawKeyword,
-        cardNo,
-        setName,
-        'pokemon card'
-      ].filter(Boolean).join(' '));
-
-      const snkrdunkQuery = encodeURIComponent([jpName, cardNo].filter(Boolean).join(' '));
-
-      const psaQuery = buildPsaSearchQuery(card);
-      const psaQueryEncoded = encodeURIComponent(psaQuery);
-
-      ebayLink.href = `https://www.ebay.com/sch/i.html?_nkw=${ebayQuery}`;
-      snkrdunkLink.href = `https://snkrdunk.com/en/search/result?keyword=${snkrdunkQuery}`;
-      psaPopLink.href = `https://www.psacard.com/pop/search?q=${psaQueryEncoded}`;
-      psaQueryText.textContent = psaQuery || '尚未產生';
-    }
-
-    function calculateHkd() {
-      const usd = Number(usdPrice.value || 0);
-      const jpy = Number(jpyPrice.value || 0);
-      const usdRate = Number(usdToHkdRate.value || 0);
-      const jpyRate = Number(jpyToHkdRate.value || 0);
-
-      usdHkdResult.textContent = (usd > 0 && usdRate > 0)
-        ? `約 HK$ ${(usd * usdRate).toFixed(2)}（USD ${usd} × ${usdRate}）`
-        : '尚未計算';
-
-      jpyHkdResult.textContent = (jpy > 0 && jpyRate > 0)
-        ? `約 HK$ ${(jpy * jpyRate).toFixed(2)}（JPY ${jpy} × ${jpyRate}）`
-        : '尚未計算';
-    }
-
-    function openModal(card) {
-      const name = getCardName(card);
-      const image = getCardImage(card);
-
-      modalTitle.textContent = name || '未命名卡片';
-      modalSet.textContent = `系列：${card.set?.name || card.set?.id || '未標示'}`;
-      modalNumber.textContent = `卡號：${card.localId || card.id || '-'}`;
-      modalYear.textContent = `推出年份：${getReleaseYear(card)}`;
-      modalTypeDetail.textContent = `卡片種類：${getCardTypeDetail(card)}`;
-      modalRarityDetail.textContent = `稀有度：${card.rarity || '未標示'}`;
-      modalSpecialTag.textContent = `特別標示：${getPromoHint(card) || '無'}`;
-      modalIllustrator.textContent = `插畫師：${card.illustrator || '未標示'}`;
-      modalResolvedName.textContent = currentEnglishName && currentJapaneseName
-        ? `英文名稱：${currentEnglishName} → 日文名稱：${currentJapaneseName}`
-        : `搜尋關鍵字：${currentRawKeyword || '-'}`;
-
-      if (image) {
-        modalImg.src = image;
-      } else {
-        modalImg.removeAttribute('src');
-      }
-      modalImg.alt = `${name || 'Pokemon'} 卡牌大圖`;
-
-      updatePriceLinks(card);
-      usdPrice.value = '';
-      jpyPrice.value = '';
-      usdHkdResult.textContent = '尚未計算';
-      jpyHkdResult.textContent = '尚未計算';
-
-      modal.classList.add('open');
-      modal.setAttribute('aria-hidden', 'false');
-    }
-
-    function closeModal() {
-      modal.classList.remove('open');
-      modal.setAttribute('aria-hidden', 'true');
-      modalImg.removeAttribute('src');
     }
 
     function renderCards(cards) {
       currentCards = cards;
 
       if (!cards.length) {
-        resultsArea.innerHTML = '<div class="empty">找不到日文卡片結果。建議先試日文名稱，或在卡號前面加系列資訊，例如 SV-P 001。</div>';
+        resultsArea.innerHTML = '<div class="empty">找不到日文卡片結果。請先試日文名稱，例如 ピカチュウ。</div>';
         return;
       }
 
-      const html = cards.map((card, index) => {
-        const image = getCardImage(card);
+      const html = cards.map(card => {
         const name = getCardName(card);
-        const number = card.localId || card.id || '-';
+        const image = getCardImage(card);
+        const cardNo = card.localId || card.id || '-';
         const setName = card.set?.name || card.set?.id || '未標示';
-        const hintsHtml = buildHints(card)
-          .map(item => `<div class="small">${escapeHtml(item)}</div>`)
-          .join('');
+        const year = getReleaseYear(card);
+
+        const snkrdunkQuery = encodeURIComponent([name, cardNo].filter(Boolean).join(' '));
+        const ebayQuery = encodeURIComponent([currentEnglishName || name, cardNo, 'pokemon card'].filter(Boolean).join(' '));
 
         return `
           <article class="card">
-            <button class="card-thumb" type="button" data-index="${index}" aria-label="開啟 ${escapeHtml(name)} 大圖">
+            <div class="thumb">
               ${image ? `
                 <img
                   src="${escapeHtml(image)}"
                   alt="${escapeHtml(name)} 卡圖"
                   loading="lazy"
-                  decoding="async"
                   width="245"
                   height="342"
                   onerror="this.style.display='none'; this.nextElementSibling.style.display='grid';"
@@ -1152,128 +487,93 @@
               ` : `
                 <div class="fallback">沒有圖片資料</div>
               `}
-            </button>
+            </div>
 
             <div class="meta">
               <h3>${escapeHtml(name || '未命名卡片')}</h3>
 
               <div class="badges">
-                <span class="badge">${escapeHtml(number)}</span>
+                <span class="badge">${escapeHtml(cardNo)}</span>
                 <span class="badge">${escapeHtml(card.rarity || '未標示')}</span>
-                <span class="badge psa">PSA</span>
               </div>
 
-              <div class="small">${escapeHtml(setName)}</div>
-              ${hintsHtml}
+              <div class="small">系列：${escapeHtml(setName)}</div>
+              <div class="small">推出年份：${escapeHtml(year)}</div>
+              <div class="small">卡片種類：${escapeHtml(card.category || '未標示')}</div>
+
+              <div class="links">
+                <a class="link-btn" href="https://snkrdunk.com/en/search/result?keyword=${snkrdunkQuery}" target="_blank" rel="noopener noreferrer">SNKRDUNK</a>
+                <a class="link-btn" href="https://www.ebay.com/sch/i.html?_nkw=${ebayQuery}" target="_blank" rel="noopener noreferrer">eBay</a>
+              </div>
             </div>
           </article>
         `;
       }).join('');
 
-      const moreHtml = canLoadMore && lastSearchMode === 'name'
-        ? `
-          <div class="more-wrap">
-            <button class="main-btn" id="loadMoreBtn" type="button">載入更多</button>
-          </div>
-        `
-        : '';
-
-      resultsArea.innerHTML = `
-        <div class="cards">${html}</div>
-        ${moreHtml}
-      `;
-
-      document.querySelectorAll('[data-index]').forEach(btn => {
-        btn.addEventListener('click', () => {
-          const card = currentCards[Number(btn.dataset.index)];
-          if (card) openModal(card);
-        });
-      });
-
-      const loadMoreBtn = document.getElementById('loadMoreBtn');
-      if (loadMoreBtn) {
-        loadMoreBtn.addEventListener('click', handleLoadMore);
-      }
+      resultsArea.innerHTML = `<div class="cards">${html}</div>`;
     }
 
-    async function runSearch(reset = true) {
-      const raw = keywordInput.value.trim();
-      if (!raw) {
-        statusEl.textContent = '請先輸入名稱或卡號。';
-        resultsArea.innerHTML = '<div class="empty">請輸入日文、英文名稱或卡號。</div>';
+    async function runSearch() {
+      const rawInput = keywordInput.value.trim();
+
+      if (!rawInput) {
+        statusEl.textContent = '請先輸入名稱。';
+        resultsArea.innerHTML = '<div class="empty">請輸入日文名稱或英文 Pokémon 名稱。</div>';
         return;
       }
 
-      if (reset) {
-        pageOffset = 0;
-        currentCards = [];
-        canLoadMore = false;
-        resultsArea.innerHTML = '<div class="empty">正在查詢日文卡片資料...</div>';
-      }
-
-      currentRawKeyword = raw;
+      resultsArea.innerHTML = '<div class="empty">正在查詢日文卡片資料...</div>';
       currentEnglishName = '';
       currentJapaneseName = '';
 
       try {
-        let cards = [];
-        let searchMode = '';
+        let japaneseKeyword = rawInput;
 
-        if (looksLikeCardNumber(raw)) {
-          searchMode = 'card-number';
-          lastSearchMode = 'card-number';
-          cards = await searchByCardNumber(raw);
-          canLoadMore = false;
-          statusEl.textContent = `卡號搜尋：${raw}，找到 ${cards.length} 張符合結果。`;
-        } else if (isJapaneseText(raw)) {
-          searchMode = 'jp-name';
-          lastSearchMode = 'name';
-          currentJapaneseName = raw;
-          const fetched = await fetchJapaneseCardsByName(raw, pageOffset);
-          cards = reset ? fetched : currentCards.concat(fetched);
-          cards = dedupeCards(cards);
-          canLoadMore = fetched.length === NAME_PAGE_SIZE;
-          statusEl.textContent = `日文名稱搜尋：${raw}，目前顯示 ${cards.length} 張日文卡片。`;
+        if (!isJapaneseText(rawInput)) {
+          currentEnglishName = rawInput;
+          currentJapaneseName = await resolveEnglishToJapaneseName(rawInput);
+          japaneseKeyword = currentJapaneseName;
+          statusEl.textContent = `英文：${rawInput} → 日文：${currentJapaneseName}，正在搜尋日文卡片...`;
         } else {
-          searchMode = 'en-name';
-          lastSearchMode = 'name';
-          currentEnglishName = raw;
-          statusEl.textContent = `正在把英文名稱轉成日文：${raw}`;
-          currentJapaneseName = await resolveEnglishToJapaneseName(raw);
-          const fetched = await fetchJapaneseCardsByName(currentJapaneseName, pageOffset);
-          cards = reset ? fetched : currentCards.concat(fetched);
-          cards = dedupeCards(cards);
-          canLoadMore = fetched.length === NAME_PAGE_SIZE;
-          statusEl.textContent = `英文：${raw} → 日文：${currentJapaneseName}，目前顯示 ${cards.length} 張日文卡片。`;
+          currentJapaneseName = rawInput;
+          statusEl.textContent = `正在搜尋日文卡片：${currentJapaneseName}`;
         }
 
-        renderCards(sortCards(cards, sortMode.value));
+        const cards = await fetchJapaneseCardsByName(japaneseKeyword);
+        const sorted = sortCards(cards, sortMode.value);
+        renderCards(sorted);
 
-        if (!cards.length) {
-          statusEl.textContent = searchMode === 'card-number'
-            ? `卡號搜尋：${raw}，目前沒有找到結果。`
-            : `搜尋：${raw}，目前沒有找到日文卡片結果。`;
+        if (currentEnglishName && currentJapaneseName) {
+          statusEl.textContent = `英文：${currentEnglishName} → 日文：${currentJapaneseName}，目前顯示 ${sorted.length} 張日文卡片。`;
+        } else {
+          statusEl.textContent = `搜尋：${currentJapaneseName}，目前顯示 ${sorted.length} 張日文卡片。`;
         }
       } catch (error) {
-        statusEl.textContent = `搜尋失敗：${error.message || '未知錯誤'}`;
+        statusEl.textContent = '搜尋失敗';
         resultsArea.innerHTML = `
           <div class="empty">
             無法取得資料。<br>
-            可能是 API 暫時沒有回應，或輸入名稱不在目前資料庫裡。<br>
+            可能原因：輸入的英文名稱不是 Pokémon 本體名稱、API 暫時無回應，或目前資料庫沒有結果。<br>
             錯誤訊息：${escapeHtml(error.message || '未知錯誤')}
           </div>
         `;
       }
     }
 
-    async function handleLoadMore() {
-      pageOffset += NAME_PAGE_SIZE;
-      await runSearch(false);
-    }
+    searchForm.addEventListener('submit', async (event) => {
+      event.preventDefault();
+      await runSearch();
+    });
 
-    document.querySelectorAll('[data-fill]').forEach(btn => {
-      btn.addEventListener('click', () => {
-        keywordInput.value = btn.dataset.fill || '';
+    sortMode.addEventListener('change', () => {
+      if (!currentCards.length) return;
+      renderCards(sortCards(currentCards, sortMode.value));
+      statusEl.textContent = `已重新排序，目前顯示 ${currentCards.length} 張日文卡片。`;
+    });
+
+    document.querySelectorAll('[data-fill]').forEach(button => {
+      button.addEventListener('click', () => {
+        keywordInput.value = button.dataset.fill || '';
       });
     });
 
@@ -1283,35 +583,8 @@
       currentCards = [];
       currentEnglishName = '';
       currentJapaneseName = '';
-      currentRawKeyword = '';
-      lastSearchMode = '';
-      pageOffset = 0;
-      canLoadMore = false;
       statusEl.textContent = '已清空。';
-      resultsArea.innerHTML = '<div class="empty">請輸入日文、英文名稱或卡號。</div>';
-    });
-
-    calcPriceBtn.addEventListener('click', calculateHkd);
-
-    sortMode.addEventListener('change', () => {
-      if (!currentCards.length) return;
-      renderCards(sortCards(currentCards, sortMode.value));
-      statusEl.textContent = currentRawKeyword
-        ? `搜尋：${currentRawKeyword}，目前顯示 ${currentCards.length} 張日文卡片。`
-        : '已重新排序。';
-    });
-
-    searchForm.addEventListener('submit', async (event) => {
-      event.preventDefault();
-      await runSearch(true);
-    });
-
-    modalClose.addEventListener('click', closeModal);
-    modal.addEventListener('click', (event) => {
-      if (event.target === modal) closeModal();
-    });
-    document.addEventListener('keydown', (event) => {
-      if (event.key === 'Escape') closeModal();
+      resultsArea.innerHTML = '<div class="empty">請輸入日文名稱或英文 Pokémon 名稱。</div>';
     });
   </script>
 </body>
