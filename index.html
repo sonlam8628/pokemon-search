@@ -4,7 +4,7 @@
   <meta charset="UTF-8" />
   <meta name="viewport" content="width=device-width, initial-scale=1.0" />
   <title>Pokemon 日文卡牌查詢（英文名搜尋）</title>
-  <meta name="description" content="輸入英文 Pokemon 名稱，搜尋日文版 Pokemon 卡牌，並提供 SNKRDUNK / eBay 價格參考連結與 HKD 換算工具。">
+  <meta name="description" content="輸入英文 Pokemon 名稱，搜尋日文版 Pokemon 卡牌，並提供 SNKRDUNK / eBay 參考連結與 HKD 換算工具。">
   <style>
     :root {
       --bg: #f6f3ee;
@@ -404,7 +404,7 @@
   <div class="wrap">
     <section class="hero">
       <h1>Pokemon 日文卡牌查詢（英文名搜尋）</h1>
-      <p class="sub">輸入英文 Pokémon 名稱，例如 Pikachu、Charizard、Eevee。系統會先對應成日文名，再搜尋日文版卡片，並提供 SNKRDUNK / eBay 搜尋連結與 HKD 換算工具。</p>
+      <p class="sub">輸入英文 Pokémon 名稱，例如 Pikachu、Charizard、Eevee。系統會先對應成日文名，再搜尋日文版卡片，並顯示推出年份、卡片種類、稀有度與 Promo 提示。</p>
 
       <form id="searchForm">
         <div class="grid">
@@ -416,10 +416,8 @@
           <div class="field">
             <label for="sortMode">排列方式</label>
             <select id="sortMode">
-              <option value="number">卡號（小至大）</option>
-              <option value="latest">最新系列</option>
-              <option value="oldest">最舊系列</option>
-              <option value="type">卡片種類</option>
+              <option value="latest">新至舊</option>
+              <option value="oldest">舊至新</option>
             </select>
           </div>
         </div>
@@ -433,7 +431,7 @@
       </form>
 
       <div class="tips">
-        這版設計目標是：用英文名找日文卡，並讓 SNKRDUNK 搜尋更接近「日文名稱 + 卡號」的查法。
+        這版目標是：用英文名找日文卡，SNKRDUNK 搜尋則以日文名稱 + 卡號為主。
       </div>
     </section>
 
@@ -448,7 +446,7 @@
       </div>
 
       <div class="footnote">
-        TCGdex REST 文件說明多數列表端點支援 filtering、sorting、pagination；本頁用英文名先轉成日文 Pokémon 名稱，再查日文卡片資料。[page:1][page:2]
+        TCGdex 的 card / set object 可提供 `releaseDate`、`category`、`rarity` 等欄位，因此可以在卡片列表與詳情內顯示推出年份、卡片種類與稀有度資訊。[page:1][page:2]
       </div>
     </section>
   </div>
@@ -461,7 +459,10 @@
         <h3 id="modalTitle">卡片名稱</h3>
         <div class="line" id="modalSet"></div>
         <div class="line" id="modalNumber"></div>
-        <div class="line" id="modalCategory"></div>
+        <div class="line" id="modalYear"></div>
+        <div class="line" id="modalTypeDetail"></div>
+        <div class="line" id="modalRarityDetail"></div>
+        <div class="line" id="modalSpecialTag"></div>
         <div class="line" id="modalIllustrator"></div>
         <div class="line" id="modalResolvedName"></div>
 
@@ -512,7 +513,7 @@
           </div>
 
           <div class="price-note">
-            這裡是純前端參考工具，不是即時成交 API。SNKRDUNK 與 eBay 連結會打開搜尋頁，HKD 只依你輸入的價格與匯率做估算。[web:329][web:327]
+            這裡是純前端參考工具，不是即時成交 API。SNKRDUNK 與 eBay 會打開搜尋頁，HKD 只依你輸入的價格與匯率做估算。[web:329][web:327]
           </div>
         </div>
       </div>
@@ -535,7 +536,10 @@
     const modalTitle = document.getElementById('modalTitle');
     const modalSet = document.getElementById('modalSet');
     const modalNumber = document.getElementById('modalNumber');
-    const modalCategory = document.getElementById('modalCategory');
+    const modalYear = document.getElementById('modalYear');
+    const modalTypeDetail = document.getElementById('modalTypeDetail');
+    const modalRarityDetail = document.getElementById('modalRarityDetail');
+    const modalSpecialTag = document.getElementById('modalSpecialTag');
     const modalIllustrator = document.getElementById('modalIllustrator');
     const modalResolvedName = document.getElementById('modalResolvedName');
 
@@ -586,8 +590,49 @@
       return '';
     }
 
-    function getCategory(card) {
+    function getReleaseYear(card) {
+      const date = card.set?.releaseDate || '';
+      return /^\d{4}-\d{2}-\d{2}$/.test(date) ? date.slice(0, 4) : '未標示';
+    }
+
+    function getCardTypeDetail(card) {
+      if (card.category === 'Trainer') {
+        return card.trainerType ? `Trainer / ${card.trainerType}` : 'Trainer';
+      }
+      if (card.category === 'Energy') {
+        return card.energyType ? `Energy / ${card.energyType}` : 'Energy';
+      }
       return card.category || card.supertype || '未標示';
+    }
+
+    function getPromoHint(card) {
+      const rarity = String(card.rarity || '').toLowerCase();
+      const setName = String(card.set?.name || '').toLowerCase();
+      const setId = String(card.set?.id || '').toLowerCase();
+      const localId = String(card.localId || card.id || '').toLowerCase();
+
+      if (
+        rarity.includes('promo') ||
+        setName.includes('promo') ||
+        setId.includes('promo') ||
+        localId.includes('promo')
+      ) {
+        return 'Promo';
+      }
+      return '';
+    }
+
+    function buildHints(card) {
+      const hints = [];
+      hints.push(`推出年份：${getReleaseYear(card)}`);
+      hints.push(`卡片種類：${getCardTypeDetail(card)}`);
+      hints.push(`稀有度：${card.rarity || '未標示'}`);
+
+      const promoHint = getPromoHint(card);
+      if (promoHint) {
+        hints.push(`特別標示：${promoHint}`);
+      }
+      return hints;
     }
 
     function parseCardNumber(numberValue) {
@@ -599,16 +644,6 @@
     function sortCards(cards, mode) {
       const copied = [...cards];
 
-      if (mode === 'latest') {
-        copied.sort((a, b) => {
-          const aDate = new Date(a.set?.releaseDate || '1900-01-01').getTime();
-          const bDate = new Date(b.set?.releaseDate || '1900-01-01').getTime();
-          if (bDate !== aDate) return bDate - aDate;
-          return parseCardNumber(a.localId || a.id) - parseCardNumber(b.localId || b.id);
-        });
-        return copied;
-      }
-
       if (mode === 'oldest') {
         copied.sort((a, b) => {
           const aDate = new Date(a.set?.releaseDate || '2999-12-31').getTime();
@@ -619,17 +654,12 @@
         return copied;
       }
 
-      if (mode === 'type') {
-        copied.sort((a, b) => {
-          const aType = getCategory(a);
-          const bType = getCategory(b);
-          if (aType !== bType) return aType.localeCompare(bType, 'ja');
-          return parseCardNumber(a.localId || a.id) - parseCardNumber(b.localId || b.id);
-        });
-        return copied;
-      }
-
-      copied.sort((a, b) => parseCardNumber(a.localId || a.id) - parseCardNumber(b.localId || b.id));
+      copied.sort((a, b) => {
+        const aDate = new Date(a.set?.releaseDate || '1900-01-01').getTime();
+        const bDate = new Date(b.set?.releaseDate || '1900-01-01').getTime();
+        if (bDate !== aDate) return bDate - aDate;
+        return parseCardNumber(a.localId || a.id) - parseCardNumber(b.localId || b.id);
+      });
       return copied;
     }
 
@@ -702,7 +732,10 @@
       modalTitle.textContent = name || '未命名卡片';
       modalSet.textContent = `系列：${card.set?.name || card.set?.id || '未標示'}`;
       modalNumber.textContent = `卡號：${card.localId || card.id || '-'}`;
-      modalCategory.textContent = `分類：${getCategory(card)}`;
+      modalYear.textContent = `推出年份：${getReleaseYear(card)}`;
+      modalTypeDetail.textContent = `卡片種類：${getCardTypeDetail(card)}`;
+      modalRarityDetail.textContent = `稀有度：${card.rarity || '未標示'}`;
+      modalSpecialTag.textContent = `特別標示：${getPromoHint(card) || '無'}`;
       modalIllustrator.textContent = `插畫師：${card.illustrator || '未標示'}`;
       modalResolvedName.textContent = `英文名稱：${currentEnglishName || '-'} → 日文名稱：${currentJapaneseName || '-'}`;
 
@@ -742,7 +775,9 @@
         const name = getCardName(card);
         const number = card.localId || card.id || '-';
         const setName = card.set?.name || card.set?.id || '未標示';
-        const category = getCategory(card);
+        const hintsHtml = buildHints(card)
+          .map(item => `<div class="small">${escapeHtml(item)}</div>`)
+          .join('');
 
         return `
           <article class="card">
@@ -765,9 +800,10 @@
               <h3>${escapeHtml(name || '未命名卡片')}</h3>
               <div class="badges">
                 <span class="badge">${escapeHtml(number)}</span>
-                <span class="badge">${escapeHtml(category)}</span>
+                <span class="badge">${escapeHtml(card.rarity || '未標示')}</span>
               </div>
               <div class="small">${escapeHtml(setName)}</div>
+              ${hintsHtml}
             </div>
           </article>
         `;
@@ -847,7 +883,7 @@
 
     clearBtn.addEventListener('click', () => {
       keywordInput.value = '';
-      sortMode.value = 'number';
+      sortMode.value = 'latest';
       statusEl.textContent = '已清空。';
       resultsArea.innerHTML = '<div class="empty">請輸入英文 Pokémon 名稱，例如 Pikachu。</div>';
       currentCards = [];
