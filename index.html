@@ -3,18 +3,21 @@
 <head>
   <meta charset="UTF-8" />
   <meta name="viewport" content="width=device-width, initial-scale=1.0" />
-  <title>pokemon-search-fallback</title>
-  <meta name="description" content="Pokemon 日文卡牌搜尋 fallback 修正版，支援日文名稱與英文 Pokémon 名稱轉日文搜尋，並加入圖片多重 fallback 與欄位缺值保護。">
+  <title>pokemon-search-full-data</title>
+  <meta name="description" content="Pokemon 日文卡牌搜尋完整資料版，支援日文名稱與英文 Pokémon 名稱轉日文搜尋，並顯示較完整卡牌欄位。">
   <style>
     :root {
       --bg: #f7f6f2;
       --surface: #fffdf9;
       --surface-2: #f2eee8;
+      --surface-3: #ece6de;
       --text: #28251d;
       --muted: #6f6a61;
+      --faint: #9c9488;
       --border: #d4d1ca;
       --primary: #01696f;
       --primary-hover: #0c4e54;
+      --soft: #e8f1f3;
       --shadow: 0 10px 30px rgba(0,0,0,0.08);
       --radius: 18px;
     }
@@ -35,7 +38,7 @@
     }
 
     .wrap {
-      width: min(1120px, calc(100% - 24px));
+      width: min(1240px, calc(100% - 24px));
       margin: 0 auto;
       padding: 24px 0 48px;
     }
@@ -63,7 +66,7 @@
       margin: 0 0 18px;
       color: var(--muted);
       line-height: 1.7;
-      max-width: 780px;
+      max-width: 860px;
     }
 
     .form-grid {
@@ -164,42 +167,43 @@
       color: var(--muted);
       font-size: 14px;
       line-height: 1.6;
-      max-width: 700px;
+      max-width: 760px;
       word-break: break-word;
     }
 
     .cards {
       display: grid;
-      grid-template-columns: repeat(auto-fill, minmax(230px, 1fr));
-      gap: 16px;
+      grid-template-columns: repeat(auto-fill, minmax(340px, 1fr));
+      gap: 18px;
     }
 
     .card {
       background: #fff;
       border: 1px solid var(--border);
-      border-radius: var(--radius);
+      border-radius: 22px;
       overflow: hidden;
-      display: flex;
-      flex-direction: column;
+      display: grid;
+      grid-template-columns: 220px 1fr;
       min-height: 100%;
     }
 
     .thumb {
       background: linear-gradient(180deg, #eef6f6, #fff);
-      padding: 14px;
-      aspect-ratio: 3 / 4;
+      padding: 16px;
       display: grid;
       place-items: center;
+      min-height: 100%;
     }
 
     .thumb img {
-      max-height: 100%;
+      max-height: 320px;
       object-fit: contain;
     }
 
     .fallback {
       width: 100%;
       height: 100%;
+      min-height: 300px;
       border: 1px dashed var(--border);
       border-radius: 12px;
       display: grid;
@@ -213,22 +217,21 @@
     }
 
     .meta {
-      padding: 14px;
+      padding: 16px;
+      display: grid;
+      gap: 12px;
+      align-content: start;
+    }
+
+    .title-row {
       display: grid;
       gap: 8px;
     }
 
     .meta h3 {
       margin: 0;
-      font-size: 17px;
-      line-height: 1.3;
-    }
-
-    .small {
-      color: var(--muted);
-      font-size: 14px;
-      line-height: 1.6;
-      word-break: break-word;
+      font-size: 22px;
+      line-height: 1.2;
     }
 
     .badges {
@@ -240,8 +243,71 @@
     .badge {
       padding: 6px 10px;
       border-radius: 999px;
-      background: #e8f1f3;
+      background: var(--soft);
       font-size: 12px;
+    }
+
+    .grid-info {
+      display: grid;
+      grid-template-columns: repeat(2, minmax(0, 1fr));
+      gap: 10px;
+    }
+
+    .info-box {
+      border: 1px solid var(--border);
+      border-radius: 14px;
+      padding: 10px 12px;
+      background: var(--surface);
+    }
+
+    .label {
+      color: var(--faint);
+      font-size: 12px;
+      margin-bottom: 4px;
+    }
+
+    .value {
+      font-size: 14px;
+      line-height: 1.6;
+      word-break: break-word;
+    }
+
+    .section {
+      border-top: 1px solid var(--border);
+      padding-top: 12px;
+      display: grid;
+      gap: 8px;
+    }
+
+    .section-title {
+      font-size: 14px;
+      font-weight: 700;
+      color: var(--muted);
+    }
+
+    .small {
+      color: var(--muted);
+      font-size: 14px;
+      line-height: 1.7;
+      word-break: break-word;
+    }
+
+    .list {
+      display: grid;
+      gap: 8px;
+    }
+
+    .item {
+      border: 1px solid var(--border);
+      background: var(--surface-2);
+      border-radius: 14px;
+      padding: 10px 12px;
+      display: grid;
+      gap: 4px;
+    }
+
+    .item strong {
+      font-size: 14px;
     }
 
     .links {
@@ -268,17 +334,29 @@
       line-height: 1.7;
     }
 
-    @media (max-width: 820px) {
-      .form-grid {
+    @media (max-width: 980px) {
+      .cards {
         grid-template-columns: 1fr;
+      }
+    }
+
+    @media (max-width: 820px) {
+      .form-grid,
+      .card {
+        grid-template-columns: 1fr;
+      }
+
+      .thumb img {
+        max-height: 360px;
       }
     }
 
     @media (max-width: 520px) {
       .wrap {
-        width: min(100% - 16px, 1120px);
+        width: min(100% - 16px, 1240px);
       }
-      .cards {
+
+      .grid-info {
         grid-template-columns: 1fr;
       }
     }
@@ -289,7 +367,7 @@
     <section class="hero">
       <h1>Pokemon 日文卡牌搜尋</h1>
       <p class="sub">
-        fallback 修正版：支援日文名稱，或先把英文 Pokémon 名稱轉成日文後再搜尋，並加入多重圖片 fallback 與欄位缺值保護，減少「只有部分顯示相片、資料不全」的問題。
+        完整資料版：盡量把卡片可取得欄位完整顯示，包括 HP、類型、進化、招式、弱點、抗性、撤退、描述、插畫師等。沒有資料的欄位會自動收起來或標示未提供。
       </p>
 
       <form id="searchForm">
@@ -317,7 +395,7 @@
       </form>
 
       <div class="tips">
-        這版仍然只保留最穩的名稱搜尋，但會盡量補救圖片格式差異與資料缺欄位情況。
+        這版會把 TCGdex 能提供的欄位盡量展開，但某些卡若資料源本身沒有該欄，畫面仍只能顯示未提供。
       </div>
     </section>
 
@@ -332,7 +410,7 @@
       </div>
 
       <div class="footnote">
-        TCGdex 的 Card 物件有不少非必填欄位，而資產文件也指出卡圖需要補 quality / extension，所以這版前端會對缺值欄位顯示預設文字，並依序嘗試多個圖片 URL。[page:1][page:2]
+        TCGdex 的 Card 物件包含許多欄位，例如 `hp`、`types`、`evolveFrom`、`attacks`、`weaknesses`、`resistances`、`retreat`、`description`、`illustrator` 等；但 Pokémon TCG API 的 cards search 文件也明確表示預設會回完整欄位，所以若你之後要更完整資料，仍建議考慮雙資料源或改主要資料源。[page:1][page:2]
       </div>
     </section>
   </div>
@@ -400,29 +478,47 @@
 
     function getReleaseYear(card) {
       const date = card.set?.releaseDate || card.releaseDate || '';
-      return /^\d{4}-\d{2}-\d{2}$/.test(date) ? date.slice(0, 4) : '未標示';
-    }
-
-    function getCardType(card) {
-      return card.category || card.supertype || '未標示';
-    }
-
-    function getCardRarity(card) {
-      return card.rarity || '未標示';
-    }
-
-    function getIllustrator(card) {
-      return card.illustrator || '未標示';
-    }
-
-    function getSetName(card) {
-      return card.set?.name || card.set?.id || '未標示';
+      return /^\d{4}-\d{2}-\d{2}$/.test(date) ? date.slice(0, 4) : '未提供';
     }
 
     function parseCardNumber(value) {
       const str = String(value || '');
       const m = str.match(/\d+/);
       return m ? Number(m[0]) : Number.MAX_SAFE_INTEGER;
+    }
+
+    function formatList(value, fallback = '未提供') {
+      if (!value) return fallback;
+      if (Array.isArray(value) && !value.length) return fallback;
+      if (Array.isArray(value)) return value.join(' / ');
+      return String(value);
+    }
+
+    function formatWeaknesses(list) {
+      if (!Array.isArray(list) || !list.length) return '未提供';
+      return list.map(item => `${item.type || '-'} ${item.value || ''}`.trim()).join(' / ');
+    }
+
+    function formatResistances(list) {
+      if (!Array.isArray(list) || !list.length) return '未提供';
+      return list.map(item => `${item.type || '-'} ${item.value || ''}`.trim()).join(' / ');
+    }
+
+    function formatAttacks(list) {
+      if (!Array.isArray(list) || !list.length) return '';
+      return list.map(attack => {
+        const cost = Array.isArray(attack.cost) && attack.cost.length ? `費用：${attack.cost.join(' / ')}` : '';
+        const damage = attack.damage ? `傷害：${attack.damage}` : '';
+        const effect = attack.effect || attack.description || '';
+        return `
+          <div class="item">
+            <strong>${escapeHtml(attack.name || '未命名招式')}</strong>
+            ${cost ? `<div class="small">${escapeHtml(cost)}</div>` : ''}
+            ${damage ? `<div class="small">${escapeHtml(damage)}</div>` : ''}
+            ${effect ? `<div class="small">${escapeHtml(effect)}</div>` : ''}
+          </div>
+        `;
+      }).join('');
     }
 
     function sortCards(cards, mode) {
@@ -508,12 +604,22 @@
         const firstImage = images[0] || '';
         const remainingImages = escapeHtml(JSON.stringify(images.slice(1)));
 
-        const cardNo = card.localId || card.id || '未標示';
-        const setName = getSetName(card);
+        const cardNo = card.localId || card.id || '未提供';
+        const setName = card.set?.name || card.set?.id || '未提供';
+        const setSeries = card.set?.serie?.name || card.set?.series || '未提供';
         const year = getReleaseYear(card);
-        const category = getCardType(card);
-        const rarity = getCardRarity(card);
-        const illustrator = getIllustrator(card);
+        const category = card.category || card.supertype || '未提供';
+        const rarity = card.rarity || '未提供';
+        const illustrator = card.illustrator || '未提供';
+        const hp = card.hp || '未提供';
+        const types = formatList(card.types, '未提供');
+        const evolveFrom = card.evolveFrom || '未提供';
+        const stage = card.stage || '未提供';
+        const weakness = formatWeaknesses(card.weaknesses);
+        const resistance = formatResistances(card.resistances);
+        const retreat = card.retreat !== undefined && card.retreat !== null ? String(card.retreat) : '未提供';
+        const description = card.description || card.effect || '';
+        const attacksHtml = formatAttacks(card.attacks);
 
         const snkrdunkQuery = encodeURIComponent([name, cardNo].filter(Boolean).join(' '));
         const ebayQuery = encodeURIComponent([currentEnglishName || name, cardNo, 'pokemon card'].filter(Boolean).join(' '));
@@ -547,22 +653,86 @@
             </div>
 
             <div class="meta">
-              <h3>${escapeHtml(name)}</h3>
-
-              <div class="badges">
-                <span class="badge">${escapeHtml(cardNo)}</span>
-                <span class="badge">${escapeHtml(rarity)}</span>
+              <div class="title-row">
+                <h3>${escapeHtml(name)}</h3>
+                <div class="badges">
+                  <span class="badge">${escapeHtml(cardNo)}</span>
+                  <span class="badge">${escapeHtml(rarity)}</span>
+                  <span class="badge">${escapeHtml(category)}</span>
+                </div>
               </div>
 
-              <div class="small">系列：${escapeHtml(setName)}</div>
-              <div class="small">推出年份：${escapeHtml(year)}</div>
-              <div class="small">卡片種類：${escapeHtml(category)}</div>
-              <div class="small">稀有度：${escapeHtml(rarity)}</div>
-              <div class="small">插畫師：${escapeHtml(illustrator)}</div>
+              <div class="grid-info">
+                <div class="info-box">
+                  <div class="label">系列</div>
+                  <div class="value">${escapeHtml(setName)}</div>
+                </div>
+                <div class="info-box">
+                  <div class="label">大系列</div>
+                  <div class="value">${escapeHtml(setSeries)}</div>
+                </div>
+                <div class="info-box">
+                  <div class="label">推出年份</div>
+                  <div class="value">${escapeHtml(year)}</div>
+                </div>
+                <div class="info-box">
+                  <div class="label">HP</div>
+                  <div class="value">${escapeHtml(hp)}</div>
+                </div>
+                <div class="info-box">
+                  <div class="label">屬性</div>
+                  <div class="value">${escapeHtml(types)}</div>
+                </div>
+                <div class="info-box">
+                  <div class="label">進化階段</div>
+                  <div class="value">${escapeHtml(stage)}</div>
+                </div>
+                <div class="info-box">
+                  <div class="label">由誰進化</div>
+                  <div class="value">${escapeHtml(evolveFrom)}</div>
+                </div>
+                <div class="info-box">
+                  <div class="label">插畫師</div>
+                  <div class="value">${escapeHtml(illustrator)}</div>
+                </div>
+                <div class="info-box">
+                  <div class="label">弱點</div>
+                  <div class="value">${escapeHtml(weakness)}</div>
+                </div>
+                <div class="info-box">
+                  <div class="label">抗性</div>
+                  <div class="value">${escapeHtml(resistance)}</div>
+                </div>
+                <div class="info-box">
+                  <div class="label">撤退</div>
+                  <div class="value">${escapeHtml(retreat)}</div>
+                </div>
+                <div class="info-box">
+                  <div class="label">更新時間</div>
+                  <div class="value">${escapeHtml(card.updated || '未提供')}</div>
+                </div>
+              </div>
 
-              <div class="links">
-                <a class="link-btn" href="https://snkrdunk.com/en/search/result?keyword=${snkrdunkQuery}" target="_blank" rel="noopener noreferrer">SNKRDUNK</a>
-                <a class="link-btn" href="https://www.ebay.com/sch/i.html?_nkw=${ebayQuery}" target="_blank" rel="noopener noreferrer">eBay</a>
+              ${description ? `
+                <div class="section">
+                  <div class="section-title">卡片描述</div>
+                  <div class="small">${escapeHtml(description)}</div>
+                </div>
+              ` : ''}
+
+              ${attacksHtml ? `
+                <div class="section">
+                  <div class="section-title">招式</div>
+                  <div class="list">${attacksHtml}</div>
+                </div>
+              ` : ''}
+
+              <div class="section">
+                <div class="section-title">外部搜尋</div>
+                <div class="links">
+                  <a class="link-btn" href="https://snkrdunk.com/en/search/result?keyword=${snkrdunkQuery}" target="_blank" rel="noopener noreferrer">SNKRDUNK</a>
+                  <a class="link-btn" href="https://www.ebay.com/sch/i.html?_nkw=${ebayQuery}" target="_blank" rel="noopener noreferrer">eBay</a>
+                </div>
               </div>
             </div>
           </article>
