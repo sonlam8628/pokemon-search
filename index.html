@@ -3,8 +3,8 @@
 <head>
   <meta charset="UTF-8" />
   <meta name="viewport" content="width=device-width, initial-scale=1.0" />
-  <title>Pokemon 日文卡牌查詢（英文名搜尋）</title>
-  <meta name="description" content="輸入英文 Pokemon 名稱，搜尋日文版 Pokemon 卡牌，並提供 SNKRDUNK / eBay 參考連結與 HKD 換算工具。">
+  <title>Pokemon 日文卡牌查詢</title>
+  <meta name="description" content="支援日文、英文名稱與卡號搜尋日文版 Pokemon 卡牌，並提供 SNKRDUNK / eBay 參考連結與 HKD 換算工具。">
   <style>
     :root {
       --bg: #f6f3ee;
@@ -65,7 +65,7 @@
     .sub {
       margin: 0 0 18px;
       color: var(--muted);
-      max-width: 860px;
+      max-width: 900px;
       line-height: 1.6;
     }
 
@@ -403,14 +403,14 @@
 <body>
   <div class="wrap">
     <section class="hero">
-      <h1>Pokemon 日文卡牌查詢（英文名搜尋）</h1>
-      <p class="sub">輸入英文 Pokémon 名稱，例如 Pikachu、Charizard、Eevee。系統會先對應成日文名，再搜尋日文版卡片，並顯示推出年份、卡片種類、稀有度與 Promo 提示。</p>
+      <h1>Pokemon 日文卡牌查詢</h1>
+      <p class="sub">輸入日文、英文名稱或卡號，例如：ピカチュウ、Pikachu、001/030、SV-P 001。系統會盡量搜尋日文版卡片，並顯示推出年份、卡片種類、稀有度與 Promo 提示。</p>
 
       <form id="searchForm">
         <div class="grid">
           <div class="field">
-            <label for="keyword">輸入英文 Pokemon 名稱</label>
-            <input id="keyword" type="text" placeholder="例如 Pikachu / Charizard / Eevee" />
+            <label for="keyword">輸入日文 / 英文名稱 / 卡號</label>
+            <input id="keyword" type="text" placeholder="例如 ピカチュウ / Pikachu / 001/030 / SV-P 001" />
           </div>
 
           <div class="field">
@@ -425,13 +425,14 @@
         <div class="actions">
           <button class="main-btn primary" type="submit">開始搜尋</button>
           <button class="main-btn" type="button" id="fillDemo1">Pikachu</button>
-          <button class="main-btn" type="button" id="fillDemo2">Charizard</button>
+          <button class="main-btn" type="button" id="fillDemo2">ピカチュウ</button>
+          <button class="main-btn" type="button" id="fillDemo3">001/030</button>
           <button class="main-btn" type="button" id="clearBtn">清空</button>
         </div>
       </form>
 
       <div class="tips">
-        這版目標是：用英文名找日文卡，SNKRDUNK 搜尋則以日文名稱 + 卡號為主。
+        搜尋邏輯：英文名會先轉日文名；日文名直接查；卡號則會先抓日文卡結果後再比對卡號。
       </div>
     </section>
 
@@ -442,11 +443,11 @@
       </div>
 
       <div id="resultsArea">
-        <div class="empty">請輸入英文 Pokémon 名稱，例如 Pikachu。</div>
+        <div class="empty">請輸入日文、英文名稱或卡號。</div>
       </div>
 
       <div class="footnote">
-        TCGdex 的 card / set object 可提供 `releaseDate`、`category`、`rarity` 等欄位，因此可以在卡片列表與詳情內顯示推出年份、卡片種類與稀有度資訊。[page:1][page:2]
+        TCGdex 的 filtering / pagination 文件支援列表查詢，card / set object 也有 `localId`、`id`、`releaseDate`、`category`、`rarity` 等欄位，因此可以搭配名稱與卡號做搜尋與提示。[page:1][page:2]
       </div>
     </section>
   </div>
@@ -529,6 +530,7 @@
     const clearBtn = document.getElementById('clearBtn');
     const fillDemo1 = document.getElementById('fillDemo1');
     const fillDemo2 = document.getElementById('fillDemo2');
+    const fillDemo3 = document.getElementById('fillDemo3');
 
     const modal = document.getElementById('modal');
     const modalClose = document.getElementById('modalClose');
@@ -556,6 +558,7 @@
     let currentCards = [];
     let currentJapaneseName = '';
     let currentEnglishName = '';
+    let currentRawKeyword = '';
     const PAGE_SIZE = 60;
     let currentOffset = 0;
     let lastBaseCards = [];
@@ -572,6 +575,19 @@
 
     function normalizeText(value) {
       return String(value || '').trim().toLowerCase();
+    }
+
+    function isJapaneseText(text) {
+      return /[\u3040-\u30ff\u3400-\u4dbf\u4e00-\u9fff]/.test(text);
+    }
+
+    function looksLikeCardNumber(input) {
+      const value = String(input || '').trim();
+      return /[0-9]/.test(value) && (
+        value.includes('/') ||
+        /^[A-Za-z]{1,6}[-\s]?[A-Za-z0-9]*\s?\d+$/i.test(value) ||
+        /^\d{1,3}$/.test(value)
+      );
     }
 
     function getCardName(card) {
@@ -641,6 +657,13 @@
       return matched ? Number(matched[0]) : Number.MAX_SAFE_INTEGER;
     }
 
+    function matchCardNumber(card, query) {
+      const q = normalizeText(query).replace(/\s+/g, '');
+      const localId = normalizeText(card.localId || '').replace(/\s+/g, '');
+      const id = normalizeText(card.id || '').replace(/\s+/g, '');
+      return localId.includes(q) || id.includes(q);
+    }
+
     function sortCards(cards, mode) {
       const copied = [...cards];
 
@@ -667,7 +690,12 @@
       const jpName = getCardName(card);
       const cardNo = card.localId || card.id || '';
       const setName = card.set?.name || '';
-      const ebayQuery = encodeURIComponent([currentEnglishName, cardNo, setName, 'pokemon card'].filter(Boolean).join(' '));
+      const ebayQuery = encodeURIComponent([
+        currentEnglishName || currentRawKeyword,
+        cardNo,
+        setName,
+        'pokemon card'
+      ].filter(Boolean).join(' '));
       const snkrdunkQuery = encodeURIComponent([jpName, cardNo].filter(Boolean).join(' '));
 
       ebayLink.href = `https://www.ebay.com/sch/i.html?_nkw=${ebayQuery}`;
@@ -710,7 +738,9 @@
 
     async function fetchJapaneseCards(japaneseName, offset = 0) {
       const url = new URL('https://api.tcgdex.net/v2/ja/cards');
-      url.searchParams.set('name', japaneseName);
+      if (japaneseName) {
+        url.searchParams.set('name', japaneseName);
+      }
       url.searchParams.set('pagination:itemsPerPage', String(PAGE_SIZE));
       url.searchParams.set('pagination:offset', String(offset));
 
@@ -737,7 +767,12 @@
       modalRarityDetail.textContent = `稀有度：${card.rarity || '未標示'}`;
       modalSpecialTag.textContent = `特別標示：${getPromoHint(card) || '無'}`;
       modalIllustrator.textContent = `插畫師：${card.illustrator || '未標示'}`;
-      modalResolvedName.textContent = `英文名稱：${currentEnglishName || '-'} → 日文名稱：${currentJapaneseName || '-'}`;
+
+      if (currentEnglishName && currentJapaneseName) {
+        modalResolvedName.textContent = `英文名稱：${currentEnglishName} → 日文名稱：${currentJapaneseName}`;
+      } else {
+        modalResolvedName.textContent = `搜尋關鍵字：${currentRawKeyword || '-'}`;
+      }
 
       if (image) {
         modalImg.src = image;
@@ -766,7 +801,7 @@
       currentCards = cards;
 
       if (!cards.length) {
-        resultsArea.innerHTML = '<div class="empty">找不到日文卡片結果。請試另一個英文名稱。</div>';
+        resultsArea.innerHTML = '<div class="empty">找不到日文卡片結果。請試另一個名稱或卡號。</div>';
         return;
       }
 
@@ -834,9 +869,9 @@
     }
 
     async function runSearch(reset = true) {
-      const englishName = keywordInput.value.trim();
-      if (!englishName) {
-        statusEl.textContent = '請先輸入英文名稱。';
+      const rawInput = keywordInput.value.trim();
+      if (!rawInput) {
+        statusEl.textContent = '請先輸入名稱或卡號。';
         return;
       }
 
@@ -844,16 +879,43 @@
         if (reset) {
           currentOffset = 0;
           resultsArea.innerHTML = '<div class="empty">正在查詢日文卡片資料...</div>';
-          statusEl.textContent = '正在將英文名稱轉成日文...';
         }
 
-        currentEnglishName = englishName;
-        currentJapaneseName = await resolveEnglishToJapaneseName(englishName);
+        currentRawKeyword = rawInput;
+        let japaneseKeyword = rawInput;
+        let searchMode = 'jp-name';
 
-        statusEl.textContent = `已轉換為日文：${currentJapaneseName}，正在查詢日文卡片...`;
+        if (looksLikeCardNumber(rawInput)) {
+          searchMode = 'card-number';
+          currentEnglishName = '';
+          currentJapaneseName = '';
+        } else if (!isJapaneseText(rawInput)) {
+          searchMode = 'en-name';
+          currentEnglishName = rawInput;
+          currentJapaneseName = await resolveEnglishToJapaneseName(rawInput);
+          japaneseKeyword = currentJapaneseName;
+        } else {
+          searchMode = 'jp-name';
+          currentEnglishName = '';
+          currentJapaneseName = rawInput;
+          japaneseKeyword = rawInput;
+        }
 
-        const fetched = await fetchJapaneseCards(currentJapaneseName, currentOffset);
-        const fetchedCards = Array.isArray(fetched) ? fetched : (fetched.cards || fetched.data || []);
+        statusEl.textContent = searchMode === 'card-number'
+          ? `正在用卡號搜尋：${rawInput}`
+          : `正在搜尋日文卡片：${japaneseKeyword}`;
+
+        const fetched = await fetchJapaneseCards(
+          searchMode === 'card-number' ? '' : japaneseKeyword,
+          currentOffset
+        );
+
+        let fetchedCards = Array.isArray(fetched) ? fetched : (fetched.cards || fetched.data || []);
+
+        if (searchMode === 'card-number') {
+          fetchedCards = fetchedCards.filter(card => matchCardNumber(card, rawInput));
+        }
+
         lastBaseCards = fetchedCards;
 
         let merged = reset ? fetchedCards : currentCards.concat(fetchedCards);
@@ -861,7 +923,11 @@
 
         renderCards(merged);
 
-        statusEl.textContent = `英文：${currentEnglishName} → 日文：${currentJapaneseName}，目前顯示 ${merged.length} 張日文卡片。`;
+        if (searchMode === 'en-name') {
+          statusEl.textContent = `英文：${rawInput} → 日文：${currentJapaneseName}，目前顯示 ${merged.length} 張日文卡片。`;
+        } else {
+          statusEl.textContent = `搜尋：${rawInput}，目前顯示 ${merged.length} 張日文卡片。`;
+        }
       } catch (error) {
         statusEl.textContent = '搜尋失敗';
         resultsArea.innerHTML = `<div class="empty">${escapeHtml(error.message || '發生未知錯誤。')}</div>`;
@@ -878,17 +944,22 @@
     });
 
     fillDemo2.addEventListener('click', () => {
-      keywordInput.value = 'Charizard';
+      keywordInput.value = 'ピカチュウ';
+    });
+
+    fillDemo3.addEventListener('click', () => {
+      keywordInput.value = '001/030';
     });
 
     clearBtn.addEventListener('click', () => {
       keywordInput.value = '';
       sortMode.value = 'latest';
       statusEl.textContent = '已清空。';
-      resultsArea.innerHTML = '<div class="empty">請輸入英文 Pokémon 名稱，例如 Pikachu。</div>';
+      resultsArea.innerHTML = '<div class="empty">請輸入日文、英文名稱或卡號。</div>';
       currentCards = [];
       currentJapaneseName = '';
       currentEnglishName = '';
+      currentRawKeyword = '';
       currentOffset = 0;
       lastBaseCards = [];
     });
@@ -898,7 +969,7 @@
     sortMode.addEventListener('change', () => {
       if (!currentCards.length) return;
       renderCards(sortCards(currentCards, sortMode.value));
-      statusEl.textContent = `英文：${currentEnglishName} → 日文：${currentJapaneseName}，目前顯示 ${currentCards.length} 張日文卡片。`;
+      statusEl.textContent = `搜尋：${currentRawKeyword}，目前顯示 ${currentCards.length} 張日文卡片。`;
     });
 
     searchForm.addEventListener('submit', async (event) => {
