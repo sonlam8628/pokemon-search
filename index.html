@@ -3,24 +3,23 @@
 <head>
   <meta charset="UTF-8" />
   <meta name="viewport" content="width=device-width, initial-scale=1.0" />
-  <title>Pokémon Card Search</title>
+  <title>Pokémon Card Search - Text Only</title>
   <style>
     :root{--bg:#f6f7fb;--card:#fff;--line:#e5e7eb;--text:#111827;--muted:#6b7280;--pri:#2563eb}
     *{box-sizing:border-box} body{margin:0;font-family:system-ui,-apple-system,Segoe UI,Roboto,sans-serif;background:var(--bg);color:var(--text)}
-    .app{display:grid;grid-template-columns:340px 1fr 330px;min-height:100vh}
+    .app{display:grid;grid-template-columns:320px 1fr 320px;min-height:100vh}
     .col{background:var(--card);border-right:1px solid var(--line);overflow:auto;padding:16px}
     .col:last-child{border-right:none} .center{background:#fafbff}
-    h1,h2{margin:0 0 12px} h1{font-size:20px} h2{font-size:18px}
+    h1,h2,h3{margin:0 0 12px} h1{font-size:20px} h2{font-size:18px} h3{font-size:15px}
     input,select,button,textarea{width:100%;padding:10px 12px;border:1px solid var(--line);border-radius:10px;font:inherit;background:#fff}
     button{background:var(--pri);color:#fff;border:none;cursor:pointer} button:hover{filter:brightness(.95)}
     .row{display:flex;gap:8px} .row > *{flex:1}
     .stack{display:flex;flex-direction:column;gap:8px}
-    .grid{display:grid;grid-template-columns:repeat(auto-fill,minmax(120px,1fr));gap:10px;margin-top:12px}
-    .card{border:1px solid var(--line);border-radius:14px;padding:8px;cursor:pointer;background:#fff}
-    .card.sel{outline:2px solid #93c5fd} .card img{width:100%;height:86px;object-fit:cover;border-radius:10px;background:#f3f4f6}
-    .name{font-weight:600;font-size:13px;margin-top:6px;line-height:1.25} .sub{font-size:12px;color:var(--muted)}
+    .list{display:flex;flex-direction:column;gap:8px;margin-top:12px}
+    .item{border:1px solid var(--line);border-radius:14px;padding:10px;cursor:pointer;background:#fff}
+    .item.sel{outline:2px solid #93c5fd}
+    .name{font-weight:600;font-size:14px} .sub{font-size:12px;color:var(--muted);margin-top:4px}
     .box{border:1px solid var(--line);border-radius:16px;padding:14px;background:#fff;margin-bottom:12px}
-    .detail-img{width:100%;max-height:320px;object-fit:contain;background:#f3f4f6;border-radius:16px;border:1px solid var(--line)}
     .kv{display:grid;grid-template-columns:110px 1fr;gap:8px 10px;font-size:14px} .k{color:var(--muted)}
     textarea{min-height:180px;resize:vertical;font-family:ui-monospace,SFMono-Regular,Menlo,monospace;font-size:12px;line-height:1.5}
     .small{font-size:12px;color:var(--muted)} .sep{height:1px;background:var(--line);margin:12px 0}
@@ -33,7 +32,7 @@
 <div class="app">
   <section class="col left">
     <h1>Pokémon Card Search</h1>
-    <div class="small">極簡版：搜尋、詳情、摘要、收藏、匯出。</div>
+    <div class="small">純文字版：搜尋、詳情、摘要、收藏、匯出。</div>
     <div class="sep"></div>
     <div class="stack">
       <input id="q" placeholder="輸入 Pikachu / 25 / SV2a / 001" />
@@ -60,15 +59,13 @@
       <div id="status" class="small">等待搜尋。</div>
     </div>
     <div class="sep"></div>
-    <div id="list" class="grid"></div>
+    <div id="list" class="list"></div>
   </section>
 
   <section class="col center">
     <h2>卡片詳情</h2>
     <div id="detailEmpty" class="box small">請先搜尋並選擇一張卡。</div>
     <div id="detailWrap" style="display:none">
-      <img id="detailImg" class="detail-img" alt="card" />
-      <div class="sep"></div>
       <div class="box">
         <div class="kv" id="detailKV"></div>
       </div>
@@ -111,225 +108,34 @@
 <script>
 const $ = s => document.getElementById(s);
 const state = { cards: [], filtered: [], selected: null, year: 'all', favorites: JSON.parse(localStorage.getItem('pokemonFavorites') || '[]') };
-
 const demo = [
-  {id:'base1-58',name:'Pikachu',number:'58/102',localId:'58',rarity:'Common',category:'Pokémon',set:{name:'Base Set',releaseDate:'1999-01-09',id:'base1'},illustrator:'Mitsuhiro Arita',text:'',image:'https://images.pokemontcg.io/base1/58_hires.png'},
-  {id:'base1-4',name:'Charizard',number:'4/102',localId:'4',rarity:'Rare Holo',category:'Pokémon',set:{name:'Base Set',releaseDate:'1999-01-09',id:'base1'},illustrator:'Mitsuhiro Arita',text:'',image:'https://images.pokemontcg.io/base1/4_hires.png'},
-  {id:'swshp-063',name:'Pikachu V',number:'SWSH063',localId:'063',rarity:'Promo',category:'Pokémon',set:{name:'Sword & Shield Promo',releaseDate:'2020-02-07',id:'swshp'},illustrator:'sowsow',text:'',image:'https://images.pokemontcg.io/swshp/063_hires.png'}
+  {id:'base1-58',name:'Pikachu',number:'58/102',localId:'58',rarity:'Common',category:'Pokémon',set:{name:'Base Set',releaseDate:'1999-01-09',id:'base1'},illustrator:'Mitsuhiro Arita',text:'A friendly demo card.'},
+  {id:'base1-4',name:'Charizard',number:'4/102',localId:'4',rarity:'Rare Holo',category:'Pokémon',set:{name:'Base Set',releaseDate:'1999-01-09',id:'base1'},illustrator:'Mitsuhiro Arita',text:'A friendly demo card.'},
+  {id:'swshp-063',name:'Pikachu V',number:'SWSH063',localId:'063',rarity:'Promo',category:'Pokémon',set:{name:'Sword & Shield Promo',releaseDate:'2020-02-07',id:'swshp'},illustrator:'sowsow',text:'A friendly demo card.'}
 ];
-
 function esc(v){return String(v ?? '').replace(/[&<>\"']/g,m=>({'&':'&amp;','<':'&lt;','>':'&gt;','\"':'&quot;',"'":'&#39;'}[m]))}
 function y(c){return c.set?.releaseDate ? new Date(c.set.releaseDate).getFullYear() : ''}
-
-function img(c){
-  const raw = (c.image?.large || c.image?.small || c.image || c.images?.large || c.images?.small || '').trim();
-  if (!raw) return 'https://via.placeholder.com/600x420?text=No+Image';
-  if (raw.startsWith('http')) return raw;
-  return raw.replace(/\/$/, '') + '/high.png';
-}
-
 function setStatus(t){ $('status').textContent = t }
-
 function saveFav(){ localStorage.setItem('pokemonFavorites', JSON.stringify(state.favorites)); renderFav() }
-
-function toggleFav(){
-  if(!state.selected) return;
-  const i = state.favorites.findIndex(x=>x.id===state.selected.id);
-  i>=0 ? state.favorites.splice(i,1) : state.favorites.push({id:state.selected.id,name:state.selected.name,number:state.selected.number,date:new Date().toISOString()});
-  saveFav();
-}
-
-function renderFav(){
-  $('favCount').textContent = `收藏 ${state.favorites.length} 張`;
-  $('favList').innerHTML = state.favorites.slice(0,8).map(f=>`• ${esc(f.name)} ${esc(f.number||'')}`).join('<br>') || '尚無收藏';
-}
-
-function sortCards(arr){
-  const m = $('sortMode').value;
-  return [...arr].sort((a,b)=>{
-    const ay=+y(a)||0, by=+y(b)||0;
-    if(m==='new') return by-ay;
-    if(m==='old') return ay-by;
-    return String(a.name||'').localeCompare(String(b.name||''));
-  });
-}
-
-function filterLocal(){
-  const q=$('q').value.trim().toLowerCase();
-  const type=$('typeFilter').value;
-  const rar=$('rarityFilter').value;
-  const yr=state.year;
-  state.filtered = sortCards(state.cards.filter(c=>{
-    const hay=[c.name,c.number,c.localId,c.id,c.set?.name,c.category,c.supertype,c.rarity].join(' ').toLowerCase();
-    return (!q || hay.includes(q)) &&
-      (type==='all' || String(c.category||c.supertype||'').includes(type)) &&
-      (rar==='all' || String(c.rarity||'').toLowerCase().includes(rar.toLowerCase())) &&
-      (yr==='all' || String(y(c))===String(yr));
-  }));
-}
-
-function renderList(){
-  const el=$('list');
-  if(!state.filtered.length){
-    el.innerHTML='<div class="small">沒有資料。</div>';
-    return;
-  }
-  el.innerHTML = state.filtered.map((c,i)=>`
-    <div class="card ${state.selected?.id===c.id?'sel':''}" data-i="${i}">
-      <img src="${esc(img(c))}" onerror="this.onerror=null;this.src='https://via.placeholder.com/300x220?text=No+Image'" />
-      <div class="name">${esc(c.name)}</div>
-      <div class="sub">${esc(c.number||c.localId||'')}</div>
-      <div class="sub">${esc(c.rarity||'')}</div>
-    </div>
-  `).join('');
-  [...el.querySelectorAll('.card')].forEach(node=>node.onclick=()=>selectCard(state.filtered[+node.dataset.i]));
-}
-
-function summary(c){
-  return [
-    `Name: ${c.name}`,
-    `ID: ${c.id}`,
-    `Number: ${c.number||c.localId||''}`,
-    `Set: ${c.set?.name||''}`,
-    `Year: ${y(c)||''}`,
-    `Type: ${c.category||c.supertype||''}`,
-    `Rarity: ${c.rarity||''}`,
-    `Illustrator: ${c.illustrator||c.artist||''}`,
-    `Description: ${(c.text||c.description||'').replace(/\s+/g,' ').trim()}`
-  ].filter(Boolean).join('\n');
-}
-
-function selectCard(c){
-  state.selected=c;
-  $('detailEmpty').style.display='none';
-  $('detailWrap').style.display='block';
-  $('detailImg').src=img(c);
-  $('detailImg').onerror=()=>{
-    $('detailImg').onerror=null;
-    $('detailImg').src='https://via.placeholder.com/600x420?text=No+Image';
-  };
-  $('detailKV').innerHTML=[
-    ['Name',c.name],['ID',c.id],['Number',c.number||c.localId||''],['Set',c.set?.name||''],['Year',y(c)],
-    ['Type',c.category||c.supertype||''],['Rarity',c.rarity||''],['HP',c.hp||''],['Illustrator',c.illustrator||c.artist||'']
-  ].map(([k,v])=>`<div class="k">${esc(k)}</div><div>${esc(v||'—')}</div>`).join('');
-  $('detailText').textContent=c.text||c.description||'沒有描述。';
-  $('summary').value=summary(c);
-  $('tcgdexLink').href=`https://tcgdex.dev/${c.set?.id||''}/${c.id||''}`;
-  $('ptcgLink').href=`https://www.pokemon.com/us/pokemon-tcg/pokemon-cards/?card=${encodeURIComponent(c.name)}`;
-  $('snkrBtn').onclick=()=>window.open(`https://snkrdunk.com/en/brands/pokemon/trading-cards?keyword=${encodeURIComponent(c.name+' '+(c.number||c.localId||''))}`,'_blank');
-  $('ebayBtn').onclick=()=>window.open(`https://www.ebay.com/sch/i.html?_nkw=${encodeURIComponent(c.name+' pokemon tcg')}`,'_blank');
-  $('psaBtn').onclick=()=>window.open('https://www.psacard.com/pop','_blank');
-  renderList();
-}
-
-function renderYears(){
-  const years=[...new Set(state.cards.map(y).filter(Boolean))].sort((a,b)=>b-a).slice(0,6);
-  $('yearChips').innerHTML=['all',...years].map(v=>`<span class="chip ${state.year===v?'active':''}" data-y="${v}">${v==='all'?'所有年份':v}</span>`).join('');
-  [...$('yearChips').querySelectorAll('.chip')].forEach(ch=>ch.onclick=()=>{
-    state.year=ch.dataset.y;
-    renderYears();
-    filterLocal();
-    renderList();
-    if(state.filtered[0]) selectCard(state.filtered[0]);
-  });
-}
-
-async function search(){
-  const q=$('q').value.trim();
-  if(!q){ setStatus('請輸入關鍵字。'); return }
-  setStatus('搜尋中...');
-  let found=[];
-  try{
-    if($('apiMode').value==='ptcg'){
-      const r=await fetch(`https://api.pokemontcg.io/v2/cards?q=name:${encodeURIComponent(q)}`);
-      const j=await r.json();
-      found=Array.isArray(j.data)?j.data.map(aPTCG):[];
-    } else {
-      const r=await fetch(`https://api.tcgdex.net/v2/ja/cards?name=${encodeURIComponent(q)}`);
-      const j=await r.json();
-      found=Array.isArray(j)?j.map(aTCG):Array.isArray(j.data)?j.data.map(aTCG):[];
-    }
-  } catch(e){
-    found=[];
-  }
-  if(!found.length) found=demo.filter(c=>[c.name,c.number,c.localId,c.id].join(' ').toLowerCase().includes(q.toLowerCase()));
-  state.cards=found;
-  filterLocal();
-  renderYears();
-  renderList();
-  if(state.filtered[0]) selectCard(state.filtered[0]);
-  setStatus(`找到 ${state.filtered.length} 張。`);
-}
-
-function aPTCG(c){
-  return {id:c.id,name:c.name,number:c.number,rarity:c.rarity,category:c.supertype,hp:c.hp,illustrator:c.artist,text:Array.isArray(c.text)?c.text.join(' '):c.text,set:{name:c.set?.name,releaseDate:c.set?.releaseDate,id:c.set?.id},image:c.images?.large||c.images?.small};
-}
-
-function aTCG(c){
-  return {id:c.id,name:c.name,number:c.number,localId:c.localId,rarity:c.rarity,category:c.category,hp:c.hp,illustrator:c.illustrator,text:c.text||c.description,set:c.set,image:c.image||c.images?.large||c.images?.small};
-}
-
-function dl(name,content,type='text/plain'){
-  const a=document.createElement('a');
-  a.href=URL.createObjectURL(new Blob([content],{type}));
-  a.download=name;
-  a.click();
-}
-
+function toggleFav(){ if(!state.selected) return; const i = state.favorites.findIndex(x=>x.id===state.selected.id); i>=0 ? state.favorites.splice(i,1) : state.favorites.push({id:state.selected.id,name:state.selected.name,number:state.selected.number,date:new Date().toISOString()}); saveFav(); }
+function renderFav(){ $('favCount').textContent = `收藏 ${state.favorites.length} 張`; $('favList').innerHTML = state.favorites.slice(0,8).map(f=>`• ${esc(f.name)} ${esc(f.number||'')}`).join('<br>') || '尚無收藏'; }
+function sortCards(arr){ const m = $('sortMode').value; return [...arr].sort((a,b)=>{ const ay=+y(a)||0, by=+y(b)||0; if(m==='new') return by-ay; if(m==='old') return ay-by; return String(a.name||'').localeCompare(String(b.name||'')) }) }
+function filterLocal(){ const q=$('q').value.trim().toLowerCase(); const type=$('typeFilter').value; const rar=$('rarityFilter').value; const yr=state.year; state.filtered = sortCards(state.cards.filter(c=>{ const hay=[c.name,c.number,c.localId,c.id,c.set?.name,c.category,c.supertype,c.rarity].join(' ').toLowerCase(); return (!q || hay.includes(q)) && (type==='all' || String(c.category||c.supertype||'').includes(type)) && (rar==='all' || String(c.rarity||'').toLowerCase().includes(rar.toLowerCase())) && (yr==='all' || String(y(c))===String(yr)); })); }
+function renderList(){ const el=$('list'); if(!state.filtered.length){ el.innerHTML='<div class="small">沒有資料。</div>'; return; } el.innerHTML = state.filtered.map((c,i)=>`<div class="item ${state.selected?.id===c.id?'sel':''}" data-i="${i}"><div class="name">${esc(c.name)}</div><div class="sub">${esc(c.number||c.localId||'')} · ${esc(c.rarity||'')}</div></div>`).join(''); [...el.querySelectorAll('.item')].forEach(node=>node.onclick=()=>selectCard(state.filtered[+node.dataset.i])); }
+function summary(c){ return [`Name: ${c.name}`,`ID: ${c.id}`,`Number: ${c.number||c.localId||''}`,`Set: ${c.set?.name||''}`,`Year: ${y(c)||''}`,`Type: ${c.category||c.supertype||''}`,`Rarity: ${c.rarity||''}`,`Illustrator: ${c.illustrator||c.artist||''}`,`Description: ${(c.text||c.description||'').replace(/\\s+/g,' ').trim()}`].filter(Boolean).join('\\n') }
+function selectCard(c){ state.selected=c; $('detailEmpty').style.display='none'; $('detailWrap').style.display='block'; $('detailKV').innerHTML=[['Name',c.name],['ID',c.id],['Number',c.number||c.localId||''],['Set',c.set?.name||''],['Year',y(c)],['Type',c.category||c.supertype||''],['Rarity',c.rarity||''],['HP',c.hp||''],['Illustrator',c.illustrator||c.artist||'']].map(([k,v])=>`<div class="k">${esc(k)}</div><div>${esc(v||'—')}</div>`).join(''); $('detailText').textContent=c.text||c.description||'沒有描述。'; $('summary').value=summary(c); $('tcgdexLink').href=`https://tcgdex.dev/${c.set?.id||''}/${c.id||''}`; $('ptcgLink').href=`https://www.pokemon.com/us/pokemon-tcg/pokemon-cards/?card=${encodeURIComponent(c.name)}`; $('snkrBtn').onclick=()=>window.open(`https://snkrdunk.com/en/brands/pokemon/trading-cards?keyword=${encodeURIComponent(c.name+' '+(c.number||c.localId||''))}`,'_blank'); $('ebayBtn').onclick=()=>window.open(`https://www.ebay.com/sch/i.html?_nkw=${encodeURIComponent(c.name+' pokemon tcg')}`,'_blank'); $('psaBtn').onclick=()=>window.open('https://www.psacard.com/pop','_blank'); renderList(); }
+function renderYears(){ const years=[...new Set(state.cards.map(y).filter(Boolean))].sort((a,b)=>b-a).slice(0,6); $('yearChips').innerHTML=['all',...years].map(v=>`<span class="chip ${state.year===v?'active':''}" data-y="${v}">${v==='all'?'所有年份':v}</span>`).join(''); [...$('yearChips').querySelectorAll('.chip')].forEach(ch=>ch.onclick=()=>{ state.year=ch.dataset.y; renderYears(); filterLocal(); renderList(); if(state.filtered[0]) selectCard(state.filtered[0]); }); }
+async function search(){ const q=$('q').value.trim(); if(!q){ setStatus('請輸入關鍵字。'); return } setStatus('搜尋中...'); let found=[]; try{ if($('apiMode').value==='ptcg'){ const r=await fetch(`https://api.pokemontcg.io/v2/cards?q=name:${encodeURIComponent(q)}`); const j=await r.json(); found=Array.isArray(j.data)?j.data.map(aPTCG):[] } else { const r=await fetch(`https://api.tcgdex.net/v2/ja/cards?name=${encodeURIComponent(q)}`); const j=await r.json(); found=Array.isArray(j)?j.map(aTCG):Array.isArray(j.data)?j.data.map(aTCG):[] } } catch(e){ found=[] } if(!found.length) found=demo.filter(c=>[c.name,c.number,c.localId,c.id].join(' ').toLowerCase().includes(q.toLowerCase())); state.cards=found; filterLocal(); renderYears(); renderList(); if(state.filtered[0]) selectCard(state.filtered[0]); setStatus(`找到 ${state.filtered.length} 張。`) }
+function aPTCG(c){ return {id:c.id,name:c.name,number:c.number,rarity:c.rarity,category:c.supertype,hp:c.hp,illustrator:c.artist,text:Array.isArray(c.text)?c.text.join(' '):c.text,set:{name:c.set?.name,releaseDate:c.set?.releaseDate,id:c.set?.id}} }
+function aTCG(c){ return {id:c.id,name:c.name,number:c.number,localId:c.localId,rarity:c.rarity,category:c.category,hp:c.hp,illustrator:c.illustrator,text:c.text||c.description,set:c.set} }
+function dl(name,content,type='text/plain'){ const a=document.createElement('a'); a.href=URL.createObjectURL(new Blob([content],{type})); a.download=name; a.click() }
 function copy(){ navigator.clipboard.writeText($('summary').value||'').then(()=>setStatus('已複製。')) }
-
 function txt(){ dl('pokemon_cards.txt',(state.filtered.length?state.filtered:state.cards).map(summary).join('\n\n---\n\n')) }
-
-function csv(){
-  const rows=['name,id,number,set,year,type,rarity,illustrator'];
-  (state.filtered.length?state.filtered:state.cards).forEach(c=>rows.push([c.name,c.id,c.number||c.localId||'',c.set?.name||'',y(c),c.category||c.supertype||'',c.rarity||'',c.illustrator||c.artist||''].map(v=>`"${String(v).replace(/"/g,'""')}"`).join(',')));
-  dl('pokemon_cards.csv',rows.join('\n'),'text/csv');
-}
-
-function favCsv(){
-  const rows=['id,name,number,date'];
-  state.favorites.forEach(f=>rows.push([f.id,f.name,f.number||'',f.date].map(v=>`"${String(v).replace(/"/g,'""')}"`).join(',')));
-  dl('favorites.csv',rows.join('\n'),'text/csv');
-}
-
-function reset(){
-  $('q').value='';
-  $('apiMode').value='tcgdex';
-  $('sortMode').value='new';
-  $('typeFilter').value='all';
-  $('rarityFilter').value='all';
-  state.year='all';
-  state.cards=[];
-  state.filtered=[];
-  state.selected=null;
-  $('list').innerHTML='';
-  $('detailEmpty').style.display='block';
-  $('detailWrap').style.display='none';
-  $('summary').value='';
-  renderYears();
-  renderFav();
-  setStatus('已重置。');
-}
-
-$('searchBtn').onclick=search;
-$('resetBtn').onclick=reset;
-$('copyBtn').onclick=copy;
-$('txtBtn').onclick=txt;
-$('csvBtn').onclick=csv;
-$('favBtn').onclick=toggleFav;
-$('favExportBtn').onclick=favCsv;
-$('q').addEventListener('keydown',e=>{if(e.key==='Enter')search()});
-['apiMode','sortMode','typeFilter','rarityFilter'].forEach(id=>$(id).addEventListener('change',()=>{
-  if(state.cards.length){
-    filterLocal();
-    renderList();
-    if(state.filtered[0]) selectCard(state.filtered[0]);
-  }
-}));
-
-renderFav();
-renderYears();
-setStatus('等待搜尋。');
+function csv(){ const rows=['name,id,number,set,year,type,rarity,illustrator']; (state.filtered.length?state.filtered:state.cards).forEach(c=>rows.push([c.name,c.id,c.number||c.localId||'',c.set?.name||'',y(c),c.category||c.supertype||'',c.rarity||'',c.illustrator||c.artist||''].map(v=>`"${String(v).replace(/"/g,'""')}"`).join(','))); dl('pokemon_cards.csv',rows.join('\n'),'text/csv') }
+function favCsv(){ const rows=['id,name,number,date']; state.favorites.forEach(f=>rows.push([f.id,f.name,f.number||'',f.date].map(v=>`"${String(v).replace(/"/g,'""')}"`).join(','))); dl('favorites.csv',rows.join('\n'),'text/csv') }
+function reset(){ $('q').value=''; $('apiMode').value='tcgdex'; $('sortMode').value='new'; $('typeFilter').value='all'; $('rarityFilter').value='all'; state.year='all'; state.cards=[]; state.filtered=[]; state.selected=null; $('list').innerHTML=''; $('detailEmpty').style.display='block'; $('detailWrap').style.display='none'; $('summary').value=''; renderYears(); renderFav(); setStatus('已重置。') }
+$('searchBtn').onclick=search; $('resetBtn').onclick=reset; $('copyBtn').onclick=copy; $('txtBtn').onclick=txt; $('csvBtn').onclick=csv; $('favBtn').onclick=toggleFav; $('favExportBtn').onclick=favCsv; $('q').addEventListener('keydown',e=>{if(e.key==='Enter')search()}); ['apiMode','sortMode','typeFilter','rarityFilter'].forEach(id=>$(id).addEventListener('change',()=>{ if(state.cards.length){ filterLocal(); renderList(); if(state.filtered[0]) selectCard(state.filtered[0]) } }));
+renderFav(); renderYears(); setStatus('等待搜尋。');
 </script>
 </body>
 </html>
