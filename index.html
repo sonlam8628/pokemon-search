@@ -409,7 +409,7 @@
   <div class="wrap">
     <section class="hero">
       <h1>Pokemon 卡牌查詢（日文輸入支援）</h1>
-      <p class="sub">可輸入日文或英文 Pokémon 名稱。系統會先把日文名稱轉成英文官方名，再用 Pokémon TCG API 查卡牌。你也可以在打開卡面後，查看 eBay / SNKRDUNK 價格參考連結，並用 USD / JPY 前端換算成 HKD。</p>
+      <p class="sub">可輸入日文或英文 Pokémon 名稱。系統會先把日文名稱轉成英文官方名，再用 Pokémon TCG API 查卡牌。打開卡面後，也可查看 eBay / SNKRDUNK 搜尋連結與 HKD 價格換算工具。</p>
 
       <form id="searchForm">
         <div class="grid">
@@ -453,7 +453,7 @@
       </div>
 
       <div class="footnote">
-        Pokémon TCG API 的 search 端點支援 `orderBy` 排序，而 card object 也提供 `number`、`supertype`、`set.releaseDate` 及 `images.small` / `images.large` 圖片欄位。[web:1][web:24][web:19]
+        這個版本使用 Pokémon TCG API 讀取卡圖與卡片欄位，並將 SNKRDUNK 搜尋改為「名稱 + 卡號」的較短關鍵字方式。[web:24][web:336]
       </div>
     </section>
   </div>
@@ -517,7 +517,7 @@
           </div>
 
           <div class="price-note">
-            這裡是純前端參考工具，不是即時成交 API。eBay 與 SNKRDUNK 連結會打開平台搜尋頁，而 HKD 換算會用你輸入的價格與匯率做估算；實際價格仍可能受手續費、運費與市場波動影響。[web:321][web:329][web:328][web:325]
+            這裡是純前端參考工具，不是即時成交 API。eBay 與 SNKRDUNK 會打開搜尋頁，HKD 則依你輸入的價格與匯率做估算；實際成交仍可能受手續費、運費與市場波動影響。[web:327][web:329]
           </div>
         </div>
       </div>
@@ -580,20 +580,24 @@
       return /[\u3040-\u30ff\u3400-\u4dbf\u4e00-\u9fff]/.test(text);
     }
 
-    function encodeSearchTerm(card) {
-      const parts = [
+    function updatePriceLinks(card) {
+      const ebayParts = [
         card.name || '',
         card.number || '',
         card.set?.name || '',
         'pokemon card'
       ].filter(Boolean);
-      return encodeURIComponent(parts.join(' '));
-    }
 
-    function updatePriceLinks(card) {
-      const query = encodeSearchTerm(card);
-      ebayLink.href = `https://www.ebay.com/sch/i.html?_nkw=${query}`;
-      snkrdunkLink.href = `https://snkrdunk.com/en/search/result?keyword=${query}`;
+      const snkrdunkParts = [
+        card.name || '',
+        card.number || ''
+      ].filter(Boolean);
+
+      const ebayQuery = encodeURIComponent(ebayParts.join(' '));
+      const snkrdunkQuery = encodeURIComponent(snkrdunkParts.join(' '));
+
+      ebayLink.href = `https://www.ebay.com/sch/i.html?_nkw=${ebayQuery}`;
+      snkrdunkLink.href = `https://snkrdunk.com/en/search/result?keyword=${snkrdunkQuery}`;
     }
 
     function calculateHkd() {
