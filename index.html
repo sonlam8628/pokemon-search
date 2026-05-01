@@ -3,22 +3,18 @@
 <head>
   <meta charset="UTF-8" />
   <meta name="viewport" content="width=device-width, initial-scale=1.0" />
-  <title>pokemon-full-data-api</title>
-  <meta name="description" content="使用 Pokémon TCG API 的完整卡牌資料搜尋頁，支援名稱搜尋、詳細欄位展示與多圖片 fallback。">
+  <title>pokemon-jp-simple-gallery</title>
+  <meta name="description" content="超精簡日文版 Pokemon 卡牌搜尋，只顯示日文卡圖與推出年份。">
   <style>
     :root {
       --bg: #f7f6f2;
       --surface: #fffdf9;
       --surface-2: #f2eee8;
-      --surface-3: #ece6de;
       --text: #28251d;
       --muted: #6f6a61;
-      --faint: #9c9488;
       --border: #d4d1ca;
       --primary: #01696f;
       --primary-hover: #0c4e54;
-      --soft: #e8f1f3;
-      --gold: #efe5c7;
       --shadow: 0 10px 30px rgba(0,0,0,0.08);
       --radius: 18px;
     }
@@ -39,7 +35,7 @@
     }
 
     .wrap {
-      width: min(1280px, calc(100% - 24px));
+      width: min(1120px, calc(100% - 24px));
       margin: 0 auto;
       padding: 24px 0 48px;
     }
@@ -67,7 +63,7 @@
       margin: 0 0 18px;
       color: var(--muted);
       line-height: 1.7;
-      max-width: 860px;
+      max-width: 760px;
     }
 
     .form-grid {
@@ -91,8 +87,7 @@
 
     input,
     select,
-    button,
-    a {
+    button {
       font: inherit;
     }
 
@@ -113,8 +108,7 @@
       gap: 10px;
     }
 
-    .btn,
-    .link-btn {
+    .btn {
       min-height: 44px;
       border-radius: 999px;
       border: 1px solid var(--border);
@@ -122,10 +116,6 @@
       color: var(--text);
       padding: 10px 16px;
       cursor: pointer;
-      text-decoration: none;
-      display: inline-flex;
-      align-items: center;
-      justify-content: center;
     }
 
     .btn.primary {
@@ -168,43 +158,42 @@
       color: var(--muted);
       font-size: 14px;
       line-height: 1.6;
-      max-width: 760px;
+      max-width: 700px;
       word-break: break-word;
     }
 
     .cards {
       display: grid;
-      grid-template-columns: 1fr;
-      gap: 18px;
+      grid-template-columns: repeat(auto-fill, minmax(220px, 1fr));
+      gap: 16px;
     }
 
     .card {
       background: #fff;
       border: 1px solid var(--border);
-      border-radius: 22px;
+      border-radius: var(--radius);
       overflow: hidden;
-      display: grid;
-      grid-template-columns: 260px 1fr;
+      display: flex;
+      flex-direction: column;
       min-height: 100%;
     }
 
     .thumb {
       background: linear-gradient(180deg, #eef6f6, #fff);
-      padding: 16px;
+      padding: 14px;
+      aspect-ratio: 3 / 4;
       display: grid;
       place-items: center;
-      min-height: 100%;
     }
 
     .thumb img {
-      max-height: 360px;
+      max-height: 100%;
       object-fit: contain;
     }
 
     .fallback {
       width: 100%;
       height: 100%;
-      min-height: 320px;
       border: 1px dashed var(--border);
       border-radius: 12px;
       display: grid;
@@ -218,108 +207,30 @@
     }
 
     .meta {
-      padding: 16px;
-      display: grid;
-      gap: 12px;
-      align-content: start;
-    }
-
-    .title-row {
+      padding: 14px;
       display: grid;
       gap: 8px;
+      text-align: center;
     }
 
     .meta h3 {
       margin: 0;
-      font-size: 24px;
-      line-height: 1.2;
+      font-size: 16px;
+      line-height: 1.35;
     }
 
-    .badges {
-      display: flex;
-      flex-wrap: wrap;
-      gap: 8px;
+    .year {
+      color: var(--muted);
+      font-size: 14px;
     }
 
     .badge {
+      display: inline-block;
+      margin: 0 auto;
       padding: 6px 10px;
       border-radius: 999px;
-      background: var(--soft);
+      background: #e8f1f3;
       font-size: 12px;
-    }
-
-    .badge.gold {
-      background: var(--gold);
-    }
-
-    .grid-info {
-      display: grid;
-      grid-template-columns: repeat(2, minmax(0, 1fr));
-      gap: 10px;
-    }
-
-    .info-box {
-      border: 1px solid var(--border);
-      border-radius: 14px;
-      padding: 10px 12px;
-      background: var(--surface);
-    }
-
-    .label {
-      color: var(--faint);
-      font-size: 12px;
-      margin-bottom: 4px;
-    }
-
-    .value {
-      font-size: 14px;
-      line-height: 1.6;
-      word-break: break-word;
-    }
-
-    .section {
-      border-top: 1px solid var(--border);
-      padding-top: 12px;
-      display: grid;
-      gap: 8px;
-    }
-
-    .section-title {
-      font-size: 14px;
-      font-weight: 700;
-      color: var(--muted);
-    }
-
-    .small {
-      color: var(--muted);
-      font-size: 14px;
-      line-height: 1.7;
-      word-break: break-word;
-    }
-
-    .list {
-      display: grid;
-      gap: 8px;
-    }
-
-    .item {
-      border: 1px solid var(--border);
-      background: var(--surface-2);
-      border-radius: 14px;
-      padding: 10px 12px;
-      display: grid;
-      gap: 4px;
-    }
-
-    .item strong {
-      font-size: 14px;
-    }
-
-    .links {
-      display: flex;
-      flex-wrap: wrap;
-      gap: 8px;
-      margin-top: 2px;
     }
 
     .empty {
@@ -332,6 +243,12 @@
       line-height: 1.7;
     }
 
+    .more-wrap {
+      display: flex;
+      justify-content: center;
+      margin-top: 18px;
+    }
+
     .footnote {
       margin-top: 14px;
       color: var(--muted);
@@ -339,8 +256,7 @@
       line-height: 1.7;
     }
 
-    @media (max-width: 900px) {
-      .card,
+    @media (max-width: 820px) {
       .form-grid {
         grid-template-columns: 1fr;
       }
@@ -348,11 +264,11 @@
 
     @media (max-width: 520px) {
       .wrap {
-        width: min(100% - 16px, 1280px);
+        width: min(100% - 16px, 1120px);
       }
 
-      .grid-info {
-        grid-template-columns: 1fr;
+      .cards {
+        grid-template-columns: repeat(2, minmax(0, 1fr));
       }
     }
   </style>
@@ -360,16 +276,16 @@
 <body>
   <div class="wrap">
     <section class="hero">
-      <h1>Pokémon TCG 完整資料版</h1>
+      <h1>超精簡日文版卡圖</h1>
       <p class="sub">
-        這版改用 Pokémon TCG API 主資料源，顯示更完整的卡片資訊：HP、屬性、攻擊、弱點、抗性、撤退、規則、插畫師、系列與圖片。
+        只顯示日文卡名、卡相片和推出年份。畫面簡單，資料依賴也最少，適合只想快速看圖與年份。
       </p>
 
       <form id="searchForm">
         <div class="form-grid">
           <div class="field">
-            <label for="keyword">輸入英文卡名 / 日文名稱嘗試 / 卡號輔助</label>
-            <input id="keyword" type="text" placeholder="例如 Pikachu / Charizard / ピカチュウ" autocomplete="off" />
+            <label for="keyword">輸入日文名稱</label>
+            <input id="keyword" type="text" placeholder="例如 ピカチュウ" autocomplete="off" />
           </div>
 
           <div class="field">
@@ -383,15 +299,15 @@
 
         <div class="actions">
           <button class="btn primary" type="submit">開始搜尋</button>
-          <button class="btn" type="button" data-fill="Pikachu">Pikachu</button>
-          <button class="btn" type="button" data-fill="Charizard">Charizard</button>
           <button class="btn" type="button" data-fill="ピカチュウ">ピカチュウ</button>
+          <button class="btn" type="button" data-fill="リザードン">リザードン</button>
+          <button class="btn" type="button" data-fill="イーブイ">イーブイ</button>
           <button class="btn" type="button" id="clearBtn">清空</button>
         </div>
       </form>
 
       <div class="tips">
-        Pokémon TCG API 預設會回所有欄位，不用另外 select；你可以用 q 查詢、用 pageSize 分頁，畫面會更容易顯示完整資料。[web:1][web:413]
+        這版只做日文名稱搜尋，不做英文轉換，也不顯示其他詳細卡牌欄位。
       </div>
     </section>
 
@@ -402,11 +318,11 @@
       </div>
 
       <div id="resultsArea">
-        <div class="empty">請輸入卡名。</div>
+        <div class="empty">請輸入日文名稱，例如 ピカチュウ。</div>
       </div>
 
       <div class="footnote">
-        Pokémon TCG API 的 cards search 支援 `q`、`page`、`pageSize`、`orderBy`，而 card object 提供比 TCGdex 更適合完整展示的欄位結構；因此這版會明顯比前一版更有資料感。[web:1][web:413]
+        TCGdex 提供多語言卡片資料，日文可用；set 資料含 `releaseDate`，卡片清單含 `name` 與 `image`，所以這版只保留最穩定的圖與年份顯示。[page:2][page:1]
       </div>
     </section>
   </div>
@@ -420,6 +336,11 @@
     const resultsArea = document.getElementById('resultsArea');
 
     let currentCards = [];
+    let pageOffset = 0;
+    let canLoadMore = false;
+    let currentKeyword = '';
+
+    const PAGE_SIZE = 48;
 
     function escapeHtml(str = '') {
       return String(str).replace(/[&<>'"]/g, char => ({
@@ -431,159 +352,129 @@
       }[char]));
     }
 
-    function normalizeText(value) {
-      return String(value || '').trim().toLowerCase();
-    }
-
-    function isJapaneseText(text) {
-      return /[\u3040-\u30ff\u3400-\u4dbf\u4e00-\u9fff]/.test(text);
+    function getCardName(card) {
+      if (typeof card.name === 'string') return card.name;
+      if (card.name && typeof card.name === 'object') {
+        return card.name.ja || card.name.en || Object.values(card.name)[0] || '';
+      }
+      return '';
     }
 
     function getCardImageCandidates(card) {
-      const images = card.images || {};
-      const candidates = [
-        images.large,
-        images.small,
-        card.imageUrlHiRes,
-        card.imageUrl,
-        images.high,
-        images.low
-      ].filter(Boolean);
+      let base = '';
 
-      return [...new Set(candidates)];
+      if (typeof card.image === 'string') {
+        base = card.image;
+      } else if (card.image && typeof card.image === 'object') {
+        base = card.image.high || card.image.low || Object.values(card.image)[0] || '';
+      }
+
+      if (!base) return [];
+
+      if (/\.(png|jpg|jpeg|webp)$/i.test(base)) {
+        return [base];
+      }
+
+      return [
+        `${base}/low.webp`,
+        `${base}/high.png`,
+        `${base}/low.png`,
+        `${base}/high.webp`
+      ];
     }
 
     function getReleaseYear(card) {
-      const date = card.set?.releaseDate || '';
-      return /^\d{4}-\d{2}-\d{2}$/.test(date) ? date.slice(0, 4) : '未提供';
+      const date = card.set?.releaseDate || card.releaseDate || '';
+      return /^\d{4}-\d{2}-\d{2}$/.test(date) ? date.slice(0, 4) : '未標示';
     }
 
-    function formatList(value, fallback = '未提供') {
-      if (!value) return fallback;
-      if (Array.isArray(value) && !value.length) return fallback;
-      if (Array.isArray(value)) return value.join(' / ');
-      return String(value);
-    }
-
-    function formatWeaknesses(list) {
-      if (!Array.isArray(list) || !list.length) return '未提供';
-      return list.map(item => `${item.type || '-'} ${item.value || ''}`.trim()).join(' / ');
-    }
-
-    function formatResistances(list) {
-      if (!Array.isArray(list) || !list.length) return '未提供';
-      return list.map(item => `${item.type || '-'} ${item.value || ''}`.trim()).join(' / ');
-    }
-
-    function formatAttacks(list) {
-      if (!Array.isArray(list) || !list.length) return '';
-      return list.map(attack => {
-        const cost = Array.isArray(attack.cost) && attack.cost.length ? `費用：${attack.cost.join(' / ')}` : '';
-        const damage = attack.damage ? `傷害：${attack.damage}` : '';
-        const effect = attack.text || attack.description || '';
-        return `
-          <div class="item">
-            <strong>${escapeHtml(attack.name || '未命名招式')}</strong>
-            ${cost ? `<div class="small">${escapeHtml(cost)}</div>` : ''}
-            ${damage ? `<div class="small">${escapeHtml(damage)}</div>` : ''}
-            ${effect ? `<div class="small">${escapeHtml(effect)}</div>` : ''}
-          </div>
-        `;
-      }).join('');
+    function parseCardNumber(value) {
+      const str = String(value || '');
+      const m = str.match(/\d+/);
+      return m ? Number(m[0]) : Number.MAX_SAFE_INTEGER;
     }
 
     function sortCards(cards, mode) {
       const copied = [...cards];
+
       if (mode === 'oldest') {
         copied.sort((a, b) => {
-          const aDate = new Date(a.set?.releaseDate || '2999-12-31').getTime();
-          const bDate = new Date(b.set?.releaseDate || '2999-12-31').getTime();
+          const aDate = new Date(a.set?.releaseDate || a.releaseDate || '2999-12-31').getTime();
+          const bDate = new Date(b.set?.releaseDate || b.releaseDate || '2999-12-31').getTime();
           if (aDate !== bDate) return aDate - bDate;
-          return (a.number || '').localeCompare(b.number || '');
+          return parseCardNumber(a.localId || a.id) - parseCardNumber(b.localId || b.id);
         });
         return copied;
       }
+
       copied.sort((a, b) => {
-        const aDate = new Date(a.set?.releaseDate || '1900-01-01').getTime();
-        const bDate = new Date(b.set?.releaseDate || '1900-01-01').getTime();
+        const aDate = new Date(a.set?.releaseDate || a.releaseDate || '1900-01-01').getTime();
+        const bDate = new Date(b.set?.releaseDate || b.releaseDate || '1900-01-01').getTime();
         if (bDate !== aDate) return bDate - aDate;
-        return (a.number || '').localeCompare(b.number || '');
+        return parseCardNumber(a.localId || a.id) - parseCardNumber(b.localId || b.id);
       });
       return copied;
+    }
+
+    function dedupeCards(cards) {
+      const map = new Map();
+      for (const card of cards) {
+        const key = card.id || `${card.set?.id || ''}-${card.localId || getCardName(card)}`;
+        if (!map.has(key)) map.set(key, card);
+      }
+      return [...map.values()];
     }
 
     async function safeJsonFetch(url) {
       const response = await fetch(url, {
         headers: { 'Accept': 'application/json' }
       });
-      if (!response.ok) throw new Error(`API 請求失敗：${response.status}`);
+
+      if (!response.ok) {
+        throw new Error(`API 請求失敗：${response.status}`);
+      }
+
       return await response.json();
     }
 
-    async function fetchEnglishCards(query) {
-      const url = new URL('https://api.pokemontcg.io/v2/cards');
-      url.searchParams.set('q', query);
-      url.searchParams.set('pageSize', '20');
-      url.searchParams.set('orderBy', '-set.releaseDate,-number');
+    async function fetchJapaneseCardsByName(keyword, offset = 0) {
+      const url = new URL('https://api.tcgdex.net/v2/ja/cards');
+      url.searchParams.set('name', keyword);
+      url.searchParams.set('sort:field', 'releaseDate');
+      url.searchParams.set('sort:order', sortMode.value === 'oldest' ? 'ASC' : 'DESC');
+      url.searchParams.set('pagination:itemsPerPage', String(PAGE_SIZE));
+      url.searchParams.set('pagination:offset', String(offset));
 
       const data = await safeJsonFetch(url.toString());
-      return data.data || [];
-    }
 
-    async function fetchJapaneseFallback(query) {
-      const url = new URL('https://api.pokemontcg.io/v2/cards');
-      url.searchParams.set('q', `name:${query.replace(/"/g, '\\"')}`);
-      url.searchParams.set('pageSize', '20');
-      url.searchParams.set('orderBy', '-set.releaseDate,-number');
-
-      const data = await safeJsonFetch(url.toString());
-      return data.data || [];
-    }
-
-    function pickBestImage(card) {
-      const candidates = getCardImageCandidates(card);
-      return candidates[0] || '';
+      if (Array.isArray(data)) return data;
+      if (Array.isArray(data.cards)) return data.cards;
+      if (Array.isArray(data.data)) return data.data;
+      return [];
     }
 
     function renderCards(cards) {
       currentCards = cards;
+
       if (!cards.length) {
-        resultsArea.innerHTML = '<div class="empty">找不到卡片結果。請試英文卡名，例如 Pikachu / Charizard。</div>';
+        resultsArea.innerHTML = '<div class="empty">找不到結果。請試其他日文名稱。</div>';
         return;
       }
 
       const html = cards.map(card => {
-        const name = card.name || '未命名卡片';
-        const image = pickBestImage(card);
-        const fallbackList = escapeHtml(JSON.stringify(getCardImageCandidates(card).slice(1)));
-
-        const attacksHtml = formatAttacks(card.attacks);
-        const rules = Array.isArray(card.rules) && card.rules.length ? card.rules.join(' / ') : '';
-        const subtypes = formatList(card.subtypes, '未提供');
-        const types = formatList(card.types, '未提供');
-        const weaknesses = formatWeaknesses(card.weaknesses);
-        const resistances = formatResistances(card.resistances);
-        const retreat = Array.isArray(card.retreatCost) && card.retreatCost.length ? card.retreatCost.join(' / ') : '未提供';
-        const hp = card.hp || '未提供';
-        const illustrator = card.illustrator || '未提供';
-        const series = card.set?.series || '未提供';
-        const setName = card.set?.name || '未提供';
-        const setId = card.set?.id || '未提供';
-        const number = card.number || '未提供';
-        const rarity = card.rarity || '未提供';
-        const supertype = card.supertype || '未提供';
-        const nationalDex = Array.isArray(card.nationalPokedexNumbers) ? card.nationalPokedexNumbers.join(', ') : '未提供';
-
-        const tcgplayerLink = card.tcgplayer?.url ? `<a class="link-btn" href="${escapeHtml(card.tcgplayer.url)}" target="_blank" rel="noopener noreferrer">TCGplayer</a>` : '';
-        const cardmarketLink = card.cardmarket?.url ? `<a class="link-btn" href="${escapeHtml(card.cardmarket.url)}" target="_blank" rel="noopener noreferrer">Cardmarket</a>` : '';
+        const name = getCardName(card) || '未命名卡片';
+        const images = getCardImageCandidates(card);
+        const firstImage = images[0] || '';
+        const remainingImages = escapeHtml(JSON.stringify(images.slice(1)));
+        const year = getReleaseYear(card);
 
         return `
           <article class="card">
             <div class="thumb">
-              ${image ? `
+              ${firstImage ? `
                 <img
-                  src="${escapeHtml(image)}"
-                  data-fallbacks='${fallbackList}'
+                  src="${escapeHtml(firstImage)}"
+                  data-fallbacks='${remainingImages}'
                   alt="${escapeHtml(name)} 卡圖"
                   loading="lazy"
                   width="245"
@@ -606,152 +497,53 @@
             </div>
 
             <div class="meta">
-              <div class="title-row">
-                <h3>${escapeHtml(name)}</h3>
-                <div class="badges">
-                  <span class="badge">${escapeHtml(number)}</span>
-                  <span class="badge">${escapeHtml(rarity)}</span>
-                  <span class="badge gold">${escapeHtml(supertype)}</span>
-                </div>
-              </div>
-
-              <div class="grid-info">
-                <div class="info-box">
-                  <div class="label">系列</div>
-                  <div class="value">${escapeHtml(setName)}</div>
-                </div>
-                <div class="info-box">
-                  <div class="label">Set ID</div>
-                  <div class="value">${escapeHtml(setId)}</div>
-                </div>
-                <div class="info-box">
-                  <div class="label">Series</div>
-                  <div class="value">${escapeHtml(series)}</div>
-                </div>
-                <div class="info-box">
-                  <div class="label">推出年份</div>
-                  <div class="value">${escapeHtml(getReleaseYear(card))}</div>
-                </div>
-                <div class="info-box">
-                  <div class="label">HP</div>
-                  <div class="value">${escapeHtml(hp)}</div>
-                </div>
-                <div class="info-box">
-                  <div class="label">屬性</div>
-                  <div class="value">${escapeHtml(types)}</div>
-                </div>
-                <div class="info-box">
-                  <div class="label">子類型</div>
-                  <div class="value">${escapeHtml(subtypes)}</div>
-                </div>
-                <div class="info-box">
-                  <div class="label">National Dex</div>
-                  <div class="value">${escapeHtml(nationalDex)}</div>
-                </div>
-                <div class="info-box">
-                  <div class="label">弱點</div>
-                  <div class="value">${escapeHtml(weaknesses)}</div>
-                </div>
-                <div class="info-box">
-                  <div class="label">抗性</div>
-                  <div class="value">${escapeHtml(resistances)}</div>
-                </div>
-                <div class="info-box">
-                  <div class="label">撤退</div>
-                  <div class="value">${escapeHtml(retreat)}</div>
-                </div>
-                <div class="info-box">
-                  <div class="label">插畫師</div>
-                  <div class="value">${escapeHtml(illustrator)}</div>
-                </div>
-              </div>
-
-              ${card.flavorText ? `
-                <div class="section">
-                  <div class="section-title">Flavor Text</div>
-                  <div class="small">${escapeHtml(card.flavorText)}</div>
-                </div>
-              ` : ''}
-
-              ${rules ? `
-                <div class="section">
-                  <div class="section-title">Rules</div>
-                  <div class="small">${escapeHtml(rules)}</div>
-                </div>
-              ` : ''}
-
-              ${card.abilities && card.abilities.length ? `
-                <div class="section">
-                  <div class="section-title">Abilities</div>
-                  <div class="list">
-                    ${card.abilities.map(ability => `
-                      <div class="item">
-                        <strong>${escapeHtml(ability.name || '未命名能力')}</strong>
-                        <div class="small">${escapeHtml(ability.text || '未提供')}</div>
-                        <div class="small">類型：${escapeHtml(ability.type || '未提供')}</div>
-                      </div>
-                    `).join('')}
-                  </div>
-                </div>
-              ` : ''}
-
-              ${attacksHtml ? `
-                <div class="section">
-                  <div class="section-title">招式</div>
-                  <div class="list">${attacksHtml}</div>
-                </div>
-              ` : ''}
-
-              ${card.ancientTrait ? `
-                <div class="section">
-                  <div class="section-title">Ancient Trait</div>
-                  <div class="small">${escapeHtml(card.ancientTrait.name || '')} ${escapeHtml(card.ancientTrait.text || '')}</div>
-                </div>
-              ` : ''}
-
-              <div class="section">
-                <div class="section-title">外部連結</div>
-                <div class="links">
-                  ${card.tcgplayer?.url ? `<a class="link-btn" href="${escapeHtml(card.tcgplayer.url)}" target="_blank" rel="noopener noreferrer">TCGplayer</a>` : ''}
-                  ${card.cardmarket?.url ? `<a class="link-btn" href="${escapeHtml(card.cardmarket.url)}" target="_blank" rel="noopener noreferrer">Cardmarket</a>` : ''}
-                </div>
-              </div>
+              <h3>${escapeHtml(name)}</h3>
+              <div class="badge">${escapeHtml(year)} 年</div>
+              <div class="year">推出年份</div>
             </div>
           </article>
         `;
       }).join('');
 
-      resultsArea.innerHTML = `<div class="cards">${html}</div>`;
+      const moreHtml = canLoadMore ? `
+        <div class="more-wrap">
+          <button class="btn" id="loadMoreBtn" type="button">載入更多</button>
+        </div>
+      ` : '';
+
+      resultsArea.innerHTML = `<div class="cards">${html}</div>${moreHtml}`;
+
+      const loadMoreBtn = document.getElementById('loadMoreBtn');
+      if (loadMoreBtn) {
+        loadMoreBtn.addEventListener('click', handleLoadMore);
+      }
     }
 
-    async function runSearch() {
+    async function runSearch(reset = true) {
       const rawInput = keywordInput.value.trim();
 
       if (!rawInput) {
-        statusEl.textContent = '請先輸入名稱。';
-        resultsArea.innerHTML = '<div class="empty">請輸入卡名。</div>';
+        statusEl.textContent = '請先輸入日文名稱。';
+        resultsArea.innerHTML = '<div class="empty">請輸入日文名稱，例如 ピカチュウ。</div>';
         return;
       }
 
-      resultsArea.innerHTML = '<div class="empty">正在查詢卡片資料...</div>';
+      if (reset) {
+        currentKeyword = rawInput;
+        pageOffset = 0;
+        currentCards = [];
+        canLoadMore = false;
+        resultsArea.innerHTML = '<div class="empty">正在搜尋日文卡圖...</div>';
+      }
 
       try {
-        let cards = [];
-        if (isJapaneseText(rawInput)) {
-          statusEl.textContent = `嘗試以日文名稱搜尋：${rawInput}`;
-          cards = await fetchJapaneseFallback(rawInput);
-        } else {
-          statusEl.textContent = `正在搜尋：${rawInput}`;
-          cards = await fetchEnglishCards(`name:${rawInput}`);
-        }
+        const fetched = await fetchJapaneseCardsByName(currentKeyword, pageOffset);
+        const merged = reset ? fetched : dedupeCards(currentCards.concat(fetched));
+        const sorted = sortCards(merged, sortMode.value);
+        canLoadMore = fetched.length === PAGE_SIZE;
 
-        if (!cards.length && !isJapaneseText(rawInput)) {
-          cards = await fetchEnglishCards(`name:*${rawInput}*`);
-        }
-
-        const sorted = sortCards(cards, sortMode.value);
         renderCards(sorted);
-        statusEl.textContent = `目前顯示 ${sorted.length} 張卡片。`;
+        statusEl.textContent = `搜尋：${currentKeyword}，目前顯示 ${sorted.length} 張卡片。`;
       } catch (error) {
         statusEl.textContent = '搜尋失敗';
         resultsArea.innerHTML = `
@@ -763,9 +555,14 @@
       }
     }
 
+    async function handleLoadMore() {
+      pageOffset += PAGE_SIZE;
+      await runSearch(false);
+    }
+
     searchForm.addEventListener('submit', async (event) => {
       event.preventDefault();
-      await runSearch();
+      await runSearch(true);
     });
 
     sortMode.addEventListener('change', () => {
@@ -784,8 +581,11 @@
       keywordInput.value = '';
       sortMode.value = 'latest';
       currentCards = [];
+      pageOffset = 0;
+      canLoadMore = false;
+      currentKeyword = '';
       statusEl.textContent = '已清空。';
-      resultsArea.innerHTML = '<div class="empty">請輸入卡名。</div>';
+      resultsArea.innerHTML = '<div class="empty">請輸入日文名稱，例如 ピカチュウ。</div>';
     });
   </script>
 </body>
