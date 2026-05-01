@@ -3,8 +3,8 @@
 <head>
   <meta charset="UTF-8" />
   <meta name="viewport" content="width=device-width, initial-scale=1.0" />
-  <title>Pokemon 日文卡牌查詢</title>
-  <meta name="description" content="使用 TCGdex 查詢 Pokemon 日文卡牌，支援日文優先與英文備援。">
+  <title>Pokemon 卡牌查詢（日文輸入支援）</title>
+  <meta name="description" content="可輸入日文或英文 Pokemon 名稱，自動轉英文後查詢 Pokemon TCG 卡牌圖案。">
   <style>
     :root {
       --bg: #f6f3ee;
@@ -13,7 +13,6 @@
       --text: #26221d;
       --muted: #6a6358;
       --primary: #146b73;
-      --primary-deep: #0e5358;
       --soft: #e6f1f2;
       --shadow: 0 12px 30px rgba(0, 0, 0, 0.08);
       --radius: 20px;
@@ -69,15 +68,10 @@
       line-height: 1.6;
     }
 
-    .filters,
     .actions {
       display: flex;
       flex-wrap: wrap;
       gap: 10px;
-    }
-
-    .filters {
-      margin-bottom: 14px;
     }
 
     button,
@@ -86,7 +80,6 @@
       font: inherit;
     }
 
-    .chip-btn,
     .main-btn {
       min-height: 44px;
       border-radius: 999px;
@@ -97,7 +90,6 @@
       color: var(--text);
     }
 
-    .chip-btn.active,
     .main-btn.primary {
       background: var(--primary);
       border-color: var(--primary);
@@ -106,7 +98,7 @@
 
     .grid {
       display: grid;
-      grid-template-columns: 1.1fr 0.7fr;
+      grid-template-columns: 1.15fr 0.75fr;
       gap: 12px;
       margin-bottom: 14px;
     }
@@ -134,6 +126,13 @@
       color: var(--text);
     }
 
+    .tips {
+      margin-top: 12px;
+      color: var(--muted);
+      font-size: 14px;
+      line-height: 1.6;
+    }
+
     .results {
       border-radius: var(--radius);
       padding: 22px;
@@ -157,6 +156,7 @@
       color: var(--muted);
       font-size: 14px;
       line-height: 1.5;
+      word-break: break-word;
     }
 
     .cards {
@@ -340,19 +340,14 @@
 <body>
   <div class="wrap">
     <section class="hero">
-      <h1>Pokemon 日文卡牌查詢</h1>
-      <p class="sub">這版使用 TCGdex，多語系 Pokémon TCG API 先查日文 `ja-jp`，找不到再自動改查英文 `en`。適合以日文卡為主的搜尋需求。</p>
-
-      <div class="filters">
-        <button class="chip-btn active" type="button" id="langJa">日文優先</button>
-        <button class="chip-btn" type="button" id="langEn">英文優先</button>
-      </div>
+      <h1>Pokemon 卡牌查詢（日文輸入支援）</h1>
+      <p class="sub">你可以直接輸入日文名，例如「ピカチュウ」、「リザードン」、「イーブイ」。系統會先嘗試辨識為日文 Pokémon 名稱，再轉成英文官方名去查卡圖。</p>
 
       <form id="searchForm">
         <div class="grid">
           <div class="field">
             <label for="keyword">輸入 Pokemon 名稱</label>
-            <input id="keyword" type="text" placeholder="例如 ピカチュウ / リザードン / Pikachu / Charizard" />
+            <input id="keyword" type="text" placeholder="例如 ピカチュウ / リザードン / Pikachu / Eevee" />
           </div>
 
           <div class="field">
@@ -367,10 +362,15 @@
 
         <div class="actions">
           <button class="main-btn primary" type="submit">開始搜尋</button>
-          <button class="main-btn" type="button" id="fillDemo">填入示例</button>
+          <button class="main-btn" type="button" id="fillDemoJa">填入日文示例</button>
+          <button class="main-btn" type="button" id="fillDemoEn">填入英文示例</button>
           <button class="main-btn" type="button" id="clearBtn">清空</button>
         </div>
       </form>
+
+      <div class="tips">
+        支援示例：ピカチュウ、リザードン、フシギダネ、ゼニガメ、イーブイ、Pikachu、Charizard。
+      </div>
     </section>
 
     <section class="results">
@@ -380,10 +380,12 @@
       </div>
 
       <div id="resultsArea">
-        <div class="empty">請輸入日文或英文 Pokemon 名稱，例如「ピカチュウ」或「Pikachu」。</div>
+        <div class="empty">請輸入日文或英文 Pokémon 名稱。</div>
       </div>
 
-      <div class="footnote">TCGdex 官方主打多語資料，包含日文支援；不同語言完整度可能略有差異，但整體方向比英文資料源更適合日文卡搜尋。[web:2][web:284]</div>
+      <div class="footnote">
+        圖片與卡片資料來自 Pokémon TCG API，該 API 的 card object 提供 `images.small` 和 `images.large` 欄位；這也是你前面已驗證成功可顯示卡圖的資料來源。[web:24][web:167]
+      </div>
     </section>
   </div>
 
@@ -395,9 +397,9 @@
         <h3 id="modalTitle">卡片名稱</h3>
         <div class="line" id="modalSet"></div>
         <div class="line" id="modalNumber"></div>
-        <div class="line" id="modalCategory"></div>
-        <div class="line" id="modalIllustrator"></div>
-        <div class="line" id="modalLanguage"></div>
+        <div class="line" id="modalRarity"></div>
+        <div class="line" id="modalArtist"></div>
+        <div class="line" id="modalResolvedName"></div>
       </div>
     </div>
   </div>
@@ -408,11 +410,9 @@
     const searchForm = document.getElementById('searchForm');
     const statusEl = document.getElementById('status');
     const resultsArea = document.getElementById('resultsArea');
-    const fillDemo = document.getElementById('fillDemo');
+    const fillDemoJa = document.getElementById('fillDemoJa');
+    const fillDemoEn = document.getElementById('fillDemoEn');
     const clearBtn = document.getElementById('clearBtn');
-
-    const langJa = document.getElementById('langJa');
-    const langEn = document.getElementById('langEn');
 
     const modal = document.getElementById('modal');
     const modalClose = document.getElementById('modalClose');
@@ -420,12 +420,12 @@
     const modalTitle = document.getElementById('modalTitle');
     const modalSet = document.getElementById('modalSet');
     const modalNumber = document.getElementById('modalNumber');
-    const modalCategory = document.getElementById('modalCategory');
-    const modalIllustrator = document.getElementById('modalIllustrator');
-    const modalLanguage = document.getElementById('modalLanguage');
+    const modalRarity = document.getElementById('modalRarity');
+    const modalArtist = document.getElementById('modalArtist');
+    const modalResolvedName = document.getElementById('modalResolvedName');
 
-    let preferredLanguage = 'ja-jp';
     let currentCards = [];
+    let lastResolvedName = '';
 
     function escapeHtml(str = '') {
       return String(str).replace(/[&<>'"]/g, char => ({
@@ -437,79 +437,94 @@
       }[char]));
     }
 
-    function setLanguage(lang) {
-      preferredLanguage = lang;
-      langJa.classList.toggle('active', lang === 'ja-jp');
-      langEn.classList.toggle('active', lang === 'en');
-    }
-
     function normalizeText(value) {
-      return String(value || '').toLowerCase().trim();
+      return String(value || '').trim().toLowerCase();
     }
 
-    function getCardName(card) {
-      if (typeof card.name === 'string') return card.name;
-      if (card.name && typeof card.name === 'object') {
-        return card.name.ja || card.name.en || Object.values(card.name)[0] || '';
+    function isJapaneseText(text) {
+      return /[\u3040-\u30ff\u3400-\u4dbf\u4e00-\u9fff]/.test(text);
+    }
+
+    async function resolvePokemonName(input) {
+      const raw = String(input || '').trim();
+      if (!raw) throw new Error('請輸入 Pokemon 名稱。');
+
+      if (!isJapaneseText(raw)) {
+        return {
+          originalInput: raw,
+          resolvedEnglishName: raw,
+          method: 'direct'
+        };
       }
-      return '';
-    }
 
-    function getImage(card) {
-      if (typeof card.image === 'string') return card.image;
-      if (card.image && typeof card.image === 'object') {
-        return card.image.high || card.image.low || Object.values(card.image)[0] || '';
+      const speciesListResponse = await fetch('https://pokeapi.co/api/v2/pokemon-species?limit=2000');
+      if (!speciesListResponse.ok) {
+        throw new Error(`PokéAPI 請求失敗：${speciesListResponse.status}`);
       }
-      return '';
+
+      const speciesList = await speciesListResponse.json();
+      const allSpecies = speciesList.results || [];
+
+      for (const species of allSpecies) {
+        const detailResponse = await fetch(species.url);
+        if (!detailResponse.ok) continue;
+
+        const detail = await detailResponse.json();
+        const names = detail.names || [];
+        const matched = names.find(item =>
+          item.language &&
+          (item.language.name === 'ja' || item.language.name === 'ja-Hrkt') &&
+          normalizeText(item.name) === normalizeText(raw)
+        );
+
+        if (matched) {
+          return {
+            originalInput: raw,
+            resolvedEnglishName: detail.name,
+            method: 'japanese-mapped'
+          };
+        }
+      }
+
+      return {
+        originalInput: raw,
+        resolvedEnglishName: raw,
+        method: 'fallback-direct'
+      };
     }
 
-    function getCardId(card) {
-      return card.id || card.localId || '';
-    }
+    async function searchCardsByEnglishName(englishName, limit) {
+      const url = new URL('https://api.pokemontcg.io/v2/cards');
+      url.searchParams.set('q', `name:${englishName}`);
+      url.searchParams.set('pageSize', String(limit));
 
-    async function fetchCards(language) {
-      const url = `https://api.tcgdex.net/v2/${language}/cards`;
-      const response = await fetch(url, {
+      const response = await fetch(url.toString(), {
         headers: { 'Accept': 'application/json' }
       });
 
       if (!response.ok) {
-        throw new Error(`TCGdex 請求失敗：${response.status}`);
+        throw new Error(`Pokémon TCG API 請求失敗：${response.status}`);
       }
 
-      return await response.json();
+      const payload = await response.json();
+      return payload.data || [];
     }
 
-    async function searchCards(keyword, language, limit) {
-      const allCards = await fetchCards(language);
-      const q = normalizeText(keyword);
+    function openModal(card) {
+      modalTitle.textContent = card.name || '未命名卡片';
+      modalSet.textContent = `系列：${card.set?.name || '未知系列'} (${card.set?.id || 'N/A'})`;
+      modalNumber.textContent = `卡號：${card.number || '-'}${card.hp ? `，HP：${card.hp}` : ''}`;
+      modalRarity.textContent = `稀有度：${card.rarity || '未標示'}`;
+      modalArtist.textContent = `插畫師：${card.artist || '未標示'}`;
+      modalResolvedName.textContent = `查詢轉換名稱：${lastResolvedName || '未記錄'}`;
 
-      const filtered = allCards.filter(card => {
-        const name = normalizeText(getCardName(card));
-        const id = normalizeText(getCardId(card));
-        return name.includes(q) || id.includes(q);
-      });
-
-      return filtered.slice(0, limit);
-    }
-
-    function openModal(card, languageUsed) {
-      const name = getCardName(card);
-      const image = getImage(card);
-
-      modalTitle.textContent = name || '未命名卡片';
-      modalSet.textContent = `系列：${card.set?.name || card.set?.id || '未標示'}`;
-      modalNumber.textContent = `卡號：${card.localId || card.id || '-'}`;
-      modalCategory.textContent = `分類：${card.category || card.supertype || '未標示'}`;
-      modalIllustrator.textContent = `插畫師：${card.illustrator || '未標示'}`;
-      modalLanguage.textContent = `語言：${languageUsed}`;
-
+      const image = card.images?.large || card.images?.small || '';
       if (image) {
         modalImg.src = image;
       } else {
         modalImg.removeAttribute('src');
       }
-      modalImg.alt = `${name || 'Pokemon'} 卡牌大圖`;
+      modalImg.alt = `${card.name || 'Pokemon'} 卡牌大圖`;
 
       modal.classList.add('open');
       modal.setAttribute('aria-hidden', 'false');
@@ -521,30 +536,28 @@
       modalImg.removeAttribute('src');
     }
 
-    function renderCards(cards, languageUsed, fallbackUsed) {
-      currentCards = cards.map(card => ({ card, languageUsed }));
+    function renderCards(cards) {
+      currentCards = cards;
 
       if (!cards.length) {
-        resultsArea.innerHTML = '<div class="empty">找不到結果。請試日文名稱、英文名稱，或確認拼寫。</div>';
+        resultsArea.innerHTML = '<div class="empty">找不到結果。請試另一個日文名或英文名。</div>';
         return;
       }
 
       resultsArea.innerHTML = `
         <div class="cards">
           ${cards.map((card, index) => {
-            const image = getImage(card);
-            const name = getCardName(card);
-            const localId = card.localId || card.id || '-';
-            const setName = card.set?.name || card.set?.id || '未標示';
-            const category = card.category || card.supertype || '未標示';
+            const smallImage = card.images?.small || '';
+            const rarity = card.rarity || '未標示';
+            const hp = card.hp ? `HP ${card.hp}` : '';
 
             return `
               <article class="card">
-                <button class="card-thumb" type="button" data-index="${index}" aria-label="開啟 ${escapeHtml(name)} 大圖">
-                  ${image ? `
+                <button class="card-thumb" type="button" data-index="${index}" aria-label="開啟 ${escapeHtml(card.name)} 大圖">
+                  ${smallImage ? `
                     <img
-                      src="${escapeHtml(image)}"
-                      alt="${escapeHtml(name)} 卡圖"
+                      src="${escapeHtml(smallImage)}"
+                      alt="${escapeHtml(card.name)} 卡圖"
                       loading="lazy"
                       width="245"
                       height="342"
@@ -556,13 +569,14 @@
                   `}
                 </button>
                 <div class="meta">
-                  <h3>${escapeHtml(name || '未命名卡片')}</h3>
+                  <h3>${escapeHtml(card.name || '未命名卡片')}</h3>
                   <div class="badges">
-                    <span class="badge">${escapeHtml(localId)}</span>
-                    <span class="badge">${escapeHtml(category)}</span>
-                    <span class="badge">${escapeHtml(languageUsed)}</span>
+                    <span class="badge">#${escapeHtml(card.number || '-')}</span>
+                    <span class="badge">${escapeHtml(rarity)}</span>
+                    ${hp ? `<span class="badge">${escapeHtml(hp)}</span>` : ''}
                   </div>
-                  <div class="small">${escapeHtml(setName)}</div>
+                  <div class="small">${escapeHtml(card.set?.name || '未知系列')}</div>
+                  <div class="small">set id：${escapeHtml(card.set?.id || 'N/A')}</div>
                 </div>
               </article>
             `;
@@ -572,27 +586,25 @@
 
       document.querySelectorAll('[data-index]').forEach(button => {
         button.addEventListener('click', () => {
-          const item = currentCards[Number(button.dataset.index)];
-          if (item) openModal(item.card, item.languageUsed);
+          const card = currentCards[Number(button.dataset.index)];
+          if (card) openModal(card);
         });
       });
-
-      statusEl.textContent = fallbackUsed
-        ? `共找到 ${cards.length} 張卡片，已自動改用英文備援。`
-        : `共找到 ${cards.length} 張卡片，資料語言：${languageUsed}`;
     }
 
-    langJa.addEventListener('click', () => setLanguage('ja-jp'));
-    langEn.addEventListener('click', () => setLanguage('en'));
+    fillDemoJa.addEventListener('click', () => {
+      keywordInput.value = 'ピカチュウ';
+    });
 
-    fillDemo.addEventListener('click', () => {
-      keywordInput.value = preferredLanguage === 'ja-jp' ? 'ピカチュウ' : 'Pikachu';
+    fillDemoEn.addEventListener('click', () => {
+      keywordInput.value = 'Pikachu';
     });
 
     clearBtn.addEventListener('click', () => {
       keywordInput.value = '';
       statusEl.textContent = '已清空。';
-      resultsArea.innerHTML = '<div class="empty">請輸入日文或英文 Pokemon 名稱，例如「ピカチュウ」或「Pikachu」。</div>';
+      resultsArea.innerHTML = '<div class="empty">請輸入日文或英文 Pokémon 名稱。</div>';
+      lastResolvedName = '';
     });
 
     searchForm.addEventListener('submit', async (event) => {
@@ -607,19 +619,18 @@
       }
 
       try {
-        statusEl.textContent = '搜尋中...';
-        resultsArea.innerHTML = '<div class="empty">正在查詢卡片資料...</div>';
+        statusEl.textContent = '正在辨識名稱...';
+        resultsArea.innerHTML = '<div class="empty">正在查詢資料...</div>';
 
-        let cards = await searchCards(keyword, preferredLanguage, limit);
+        const resolved = await resolvePokemonName(keyword);
+        lastResolvedName = resolved.resolvedEnglishName;
 
-        if (cards.length > 0) {
-          renderCards(cards, preferredLanguage, false);
-          return;
-        }
+        statusEl.textContent = `已辨識為：${resolved.resolvedEnglishName}，正在查詢卡片...`;
 
-        const fallbackLang = preferredLanguage === 'ja-jp' ? 'en' : 'ja-jp';
-        cards = await searchCards(keyword, fallbackLang, limit);
-        renderCards(cards, fallbackLang, true);
+        const cards = await searchCardsByEnglishName(resolved.resolvedEnglishName, limit);
+
+        statusEl.textContent = `輸入：${resolved.originalInput} → 查詢名稱：${resolved.resolvedEnglishName}，共找到 ${cards.length} 張卡片。`;
+        renderCards(cards);
       } catch (error) {
         statusEl.textContent = '搜尋失敗';
         resultsArea.innerHTML = `<div class="empty">${escapeHtml(error.message || '發生未知錯誤。')}</div>`;
