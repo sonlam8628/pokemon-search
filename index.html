@@ -3,8 +3,8 @@
 <head>
   <meta charset="UTF-8" />
   <meta name="viewport" content="width=device-width, initial-scale=1.0" />
-  <title>pokemon-jp-card-search</title>
-  <meta name="description" content="支援日文、英文名稱與卡號搜尋日文版 Pokemon 卡牌，提供排序、卡片資訊、SNKRDUNK / eBay 參考連結與 HKD 換算。">
+  <title>pokemon-jp-card-search-psa</title>
+  <meta name="description" content="支援日文、英文名稱與卡號搜尋日文版 Pokemon 卡牌，並提供 PSA Population、SNKRDUNK、eBay 與 HKD 換算。">
   <link href="https://api.fontshare.com/v2/css?f[]=satoshi@400,500,700&f[]=general-sans@500,600,700&display=swap" rel="stylesheet">
   <style>
     :root, [data-theme="light"] {
@@ -39,6 +39,7 @@
       --color-primary-hover: #0c4e54;
       --color-primary-highlight: #dceaea;
       --color-blue-soft: #e8f1f3;
+      --color-gold-soft: #efe5c7;
       --shadow-sm: 0 1px 2px rgba(0,0,0,0.05);
       --shadow-md: 0 10px 30px rgba(0,0,0,0.08);
       --radius-sm: 0.5rem;
@@ -66,6 +67,7 @@
       --color-primary-hover: #227f8b;
       --color-primary-highlight: #263638;
       --color-blue-soft: #202b2d;
+      --color-gold-soft: #403826;
       --shadow-sm: 0 1px 2px rgba(0,0,0,0.25);
       --shadow-md: 0 12px 32px rgba(0,0,0,0.35);
     }
@@ -85,6 +87,7 @@
         --color-primary-hover: #227f8b;
         --color-primary-highlight: #263638;
         --color-blue-soft: #202b2d;
+        --color-gold-soft: #403826;
         --shadow-sm: 0 1px 2px rgba(0,0,0,0.25);
         --shadow-md: 0 12px 32px rgba(0,0,0,0.35);
       }
@@ -122,24 +125,6 @@
       outline-offset: 3px;
       border-radius: var(--radius-sm);
     }
-    .sr-only {
-      position: absolute;
-      width: 1px;
-      height: 1px;
-      padding: 0;
-      margin: -1px;
-      overflow: hidden;
-      clip: rect(0,0,0,0);
-      white-space: nowrap;
-      border: 0;
-    }
-
-    .wrap {
-      width: min(calc(100% - 24px), var(--content-wide));
-      margin-inline: auto;
-      padding-block: clamp(var(--space-6), 5vw, var(--space-12));
-    }
-
     .skip-link {
       position: absolute;
       top: -100px;
@@ -152,6 +137,12 @@
       text-decoration: none;
     }
     .skip-link:focus { top: var(--space-4); }
+
+    .wrap {
+      width: min(calc(100% - 24px), var(--content-wide));
+      margin-inline: auto;
+      padding-block: clamp(var(--space-6), 5vw, var(--space-12));
+    }
 
     .shell,
     .panel,
@@ -437,6 +428,10 @@
       border: 1px solid color-mix(in oklab, var(--color-primary) 10%, transparent);
     }
 
+    .badge.psa {
+      background: var(--color-gold-soft);
+    }
+
     .empty {
       border: 1px dashed color-mix(in oklab, var(--color-text) 16%, transparent);
       border-radius: var(--radius-lg);
@@ -475,7 +470,7 @@
     .modal.open { display: flex; }
 
     .modal-card {
-      width: min(980px, 100%);
+      width: min(1040px, 100%);
       border-radius: var(--radius-xl);
       padding: var(--space-5);
       display: grid;
@@ -548,6 +543,26 @@
       gap: var(--space-3);
     }
 
+    .psa-box {
+      display: grid;
+      gap: var(--space-3);
+      padding: var(--space-4);
+      border-radius: var(--radius-md);
+      border: 1px solid color-mix(in oklab, var(--color-text) 10%, transparent);
+      background: color-mix(in oklab, var(--color-primary) 3%, var(--color-surface));
+    }
+
+    .psa-query {
+      font-size: var(--text-sm);
+      line-height: 1.7;
+      color: var(--color-text);
+      background: var(--color-surface);
+      border: 1px solid color-mix(in oklab, var(--color-text) 10%, transparent);
+      border-radius: var(--radius-md);
+      padding: var(--space-3);
+      word-break: break-word;
+    }
+
     .converter-grid {
       display: grid;
       grid-template-columns: repeat(2, minmax(0, 1fr));
@@ -616,7 +631,7 @@
             <circle cx="32" cy="32" r="7" fill="currentColor"></circle>
           </svg>
           <div class="brand-text">
-            <strong>Pokemon JP Card Search</strong>
+            <strong>Pokemon JP Card Search + PSA</strong>
             <span>日文卡片名稱 / 英文名稱 / 卡號搜尋</span>
           </div>
         </div>
@@ -629,9 +644,9 @@
       <main id="main">
         <section class="hero">
           <div class="hero-copy">
-            <div class="eyebrow">Stable search flow</div>
-            <h1>先把名稱搜尋做穩，再補強卡號搜尋。</h1>
-            <p>這版以日文版卡片為主，日文名稱可直接查，英文名稱會先轉成日文後再查；卡號搜尋則改為較穩妥的分頁掃描比對，避免前一版直接失敗。</p>
+            <div class="eyebrow">With PSA helper</div>
+            <h1>日文卡搜尋，加上 PSA Population 搜尋入口。</h1>
+            <p>這版維持日文卡片搜尋為主，並在卡片詳情加入 PSA Population 官方搜尋按鈕與建議搜尋字串，方便你快速跳轉查 pop report。</p>
           </div>
 
           <form id="searchForm" class="search-form">
@@ -660,7 +675,7 @@
 
             <div class="helper-row">
               <span>英文名會先轉日文名，再用 TCGdex 日文 cards 端點搜尋。</span>
-              <span>卡號搜尋會掃描多頁結果並比對 localId / id。</span>
+              <span>PSA 目前先用官方 population 搜尋頁，這樣最穩。</span>
             </div>
           </form>
         </section>
@@ -680,7 +695,7 @@
       </div>
 
       <div class="footnote">
-        TCGdex 文件說明 cards 列表支援 filtering、sorting、pagination，`name=` 可做包含搜尋，也能指定排序欄位與順序；因此這版把名稱搜尋交給 API，卡號則以前端比對 `localId` / `id` 為主。[web:44][web:308]
+        TCGdex 文件說明 cards 端點支援 filtering、sorting、pagination，而 PSA 官方則提供 Population Report 搜尋頁與 Public API 文件；因此這版先把 PSA 做成官方搜尋入口，避免直接前端抓資料時遇到授權或 CORS 問題。[web:44][web:308][web:379][web:391]
       </div>
     </section>
   </div>
@@ -703,11 +718,20 @@
         <div class="line" id="modalResolvedName"></div>
 
         <div class="price-panel">
-          <h4>價格參考</h4>
+          <h4>價格與 PSA 參考</h4>
 
           <div class="price-links">
             <a class="link-btn" id="ebayLink" href="#" target="_blank" rel="noopener noreferrer">打開 eBay 搜尋</a>
             <a class="link-btn" id="snkrdunkLink" href="#" target="_blank" rel="noopener noreferrer">打開 SNKRDUNK 搜尋</a>
+            <a class="link-btn" id="psaPopLink" href="#" target="_blank" rel="noopener noreferrer">打開 PSA Population</a>
+          </div>
+
+          <div class="psa-box">
+            <div class="badges">
+              <span class="badge psa">PSA Search Helper</span>
+            </div>
+            <div class="small">建議搜尋字串</div>
+            <div class="psa-query" id="psaQueryText">尚未產生</div>
           </div>
 
           <div class="converter-grid">
@@ -748,7 +772,7 @@
           </div>
 
           <div class="price-note">
-            這裡是搜尋連結與換算工具，不是即時成交 API。
+            PSA 目前是官方 Population 搜尋連結，不是即時數據回傳。
           </div>
         </div>
       </div>
@@ -789,6 +813,9 @@
 
     const ebayLink = document.getElementById('ebayLink');
     const snkrdunkLink = document.getElementById('snkrdunkLink');
+    const psaPopLink = document.getElementById('psaPopLink');
+    const psaQueryText = document.getElementById('psaQueryText');
+
     const usdPrice = document.getElementById('usdPrice');
     const jpyPrice = document.getElementById('jpyPrice');
     const usdToHkdRate = document.getElementById('usdToHkdRate');
@@ -1004,14 +1031,37 @@
       return dedupeCards(results);
     }
 
+    function buildPsaSearchQuery(card) {
+      const year = getReleaseYear(card);
+      const englishOrCurrent = currentEnglishName || getCardName(card);
+      const cardNo = card.localId || '';
+      const setName = card.set?.name || '';
+      return [year !== '未標示' ? year : '', englishOrCurrent, cardNo, setName]
+        .filter(Boolean)
+        .join(' ');
+    }
+
     function updatePriceLinks(card) {
       const jpName = getCardName(card);
       const cardNo = card.localId || card.id || '';
       const setName = card.set?.name || '';
-      const ebayQuery = encodeURIComponent([currentEnglishName || currentRawKeyword, cardNo, setName, 'pokemon card'].filter(Boolean).join(' '));
+
+      const ebayQuery = encodeURIComponent([
+        currentEnglishName || currentRawKeyword,
+        cardNo,
+        setName,
+        'pokemon card'
+      ].filter(Boolean).join(' '));
+
       const snkrdunkQuery = encodeURIComponent([jpName, cardNo].filter(Boolean).join(' '));
+
+      const psaQuery = buildPsaSearchQuery(card);
+      const psaQueryEncoded = encodeURIComponent(psaQuery);
+
       ebayLink.href = `https://www.ebay.com/sch/i.html?_nkw=${ebayQuery}`;
       snkrdunkLink.href = `https://snkrdunk.com/en/search/result?keyword=${snkrdunkQuery}`;
+      psaPopLink.href = `https://www.psacard.com/pop/search?q=${psaQueryEncoded}`;
+      psaQueryText.textContent = psaQuery || '尚未產生';
     }
 
     function calculateHkd() {
@@ -1110,6 +1160,7 @@
               <div class="badges">
                 <span class="badge">${escapeHtml(number)}</span>
                 <span class="badge">${escapeHtml(card.rarity || '未標示')}</span>
+                <span class="badge psa">PSA</span>
               </div>
 
               <div class="small">${escapeHtml(setName)}</div>
