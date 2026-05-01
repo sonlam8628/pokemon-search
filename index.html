@@ -3,13 +3,12 @@
 <head>
   <meta charset="UTF-8" />
   <meta name="viewport" content="width=device-width, initial-scale=1.0" />
-  <title>pokemon-jp-simple-gallery</title>
-  <meta name="description" content="超精簡日文版 Pokemon 卡牌搜尋，只顯示日文卡圖與推出年份。">
+  <title>pokemon-jp-simple-gallery-fixed</title>
+  <meta name="description" content="超精簡日文版 Pokemon 卡牌搜尋修正版，只顯示日文卡圖與推出年份，加入 fallback 模糊搜尋。">
   <style>
     :root {
       --bg: #f7f6f2;
       --surface: #fffdf9;
-      --surface-2: #f2eee8;
       --text: #28251d;
       --muted: #6f6a61;
       --border: #d4d1ca;
@@ -18,81 +17,55 @@
       --shadow: 0 10px 30px rgba(0,0,0,0.08);
       --radius: 18px;
     }
-
     * { box-sizing: border-box; }
-
     body {
       margin: 0;
       font-family: Arial, sans-serif;
       background: linear-gradient(180deg, #faf8f4, var(--bg));
       color: var(--text);
     }
-
-    img {
-      display: block;
-      max-width: 100%;
-      height: auto;
-    }
-
+    img { display: block; max-width: 100%; height: auto; }
     .wrap {
       width: min(1120px, calc(100% - 24px));
       margin: 0 auto;
       padding: 24px 0 48px;
     }
-
-    .hero,
-    .panel {
+    .hero, .panel {
       background: rgba(255, 253, 249, 0.96);
       border: 1px solid var(--border);
       border-radius: 24px;
       box-shadow: var(--shadow);
     }
-
-    .hero {
-      padding: 24px;
-      margin-bottom: 20px;
-    }
-
+    .hero { padding: 24px; margin-bottom: 20px; }
     h1 {
       margin: 0 0 10px;
       font-size: clamp(28px, 5vw, 42px);
       line-height: 1.08;
     }
-
     .sub {
       margin: 0 0 18px;
       color: var(--muted);
       line-height: 1.7;
       max-width: 760px;
     }
-
     .form-grid {
       display: grid;
       grid-template-columns: 1.2fr 0.7fr;
       gap: 12px;
       margin-bottom: 12px;
     }
-
     .field {
       display: flex;
       flex-direction: column;
       gap: 6px;
     }
-
     label {
       font-size: 14px;
       color: var(--muted);
       font-weight: 700;
     }
-
-    input,
-    select,
-    button {
-      font: inherit;
-    }
-
-    input,
-    select {
+    input, select, button { font: inherit; }
+    input, select {
       width: 100%;
       min-height: 48px;
       border-radius: 14px;
@@ -101,13 +74,11 @@
       background: #fff;
       color: var(--text);
     }
-
     .actions {
       display: flex;
       flex-wrap: wrap;
       gap: 10px;
     }
-
     .btn {
       min-height: 44px;
       border-radius: 999px;
@@ -117,29 +88,22 @@
       padding: 10px 16px;
       cursor: pointer;
     }
-
     .btn.primary {
       background: var(--primary);
       border-color: var(--primary);
       color: #fff;
     }
-
     .btn.primary:hover {
       background: var(--primary-hover);
       border-color: var(--primary-hover);
     }
-
     .tips {
       margin-top: 12px;
       color: var(--muted);
       font-size: 14px;
       line-height: 1.7;
     }
-
-    .panel {
-      padding: 22px;
-    }
-
+    .panel { padding: 22px; }
     .bar {
       display: flex;
       justify-content: space-between;
@@ -148,12 +112,10 @@
       flex-wrap: wrap;
       margin-bottom: 16px;
     }
-
     .bar h2 {
       margin: 0;
       font-size: 20px;
     }
-
     .status {
       color: var(--muted);
       font-size: 14px;
@@ -161,13 +123,11 @@
       max-width: 700px;
       word-break: break-word;
     }
-
     .cards {
       display: grid;
       grid-template-columns: repeat(auto-fill, minmax(220px, 1fr));
       gap: 16px;
     }
-
     .card {
       background: #fff;
       border: 1px solid var(--border);
@@ -177,7 +137,6 @@
       flex-direction: column;
       min-height: 100%;
     }
-
     .thumb {
       background: linear-gradient(180deg, #eef6f6, #fff);
       padding: 14px;
@@ -185,12 +144,10 @@
       display: grid;
       place-items: center;
     }
-
     .thumb img {
       max-height: 100%;
       object-fit: contain;
     }
-
     .fallback {
       width: 100%;
       height: 100%;
@@ -205,25 +162,17 @@
       font-size: 14px;
       line-height: 1.6;
     }
-
     .meta {
       padding: 14px;
       display: grid;
       gap: 8px;
       text-align: center;
     }
-
     .meta h3 {
       margin: 0;
       font-size: 16px;
       line-height: 1.35;
     }
-
-    .year {
-      color: var(--muted);
-      font-size: 14px;
-    }
-
     .badge {
       display: inline-block;
       margin: 0 auto;
@@ -232,7 +181,10 @@
       background: #e8f1f3;
       font-size: 12px;
     }
-
+    .year {
+      color: var(--muted);
+      font-size: 14px;
+    }
     .empty {
       border: 1px dashed var(--border);
       border-radius: 16px;
@@ -242,34 +194,12 @@
       background: #fff;
       line-height: 1.7;
     }
-
-    .more-wrap {
-      display: flex;
-      justify-content: center;
-      margin-top: 18px;
-    }
-
-    .footnote {
-      margin-top: 14px;
-      color: var(--muted);
-      font-size: 13px;
-      line-height: 1.7;
-    }
-
     @media (max-width: 820px) {
-      .form-grid {
-        grid-template-columns: 1fr;
-      }
+      .form-grid { grid-template-columns: 1fr; }
     }
-
     @media (max-width: 520px) {
-      .wrap {
-        width: min(100% - 16px, 1120px);
-      }
-
-      .cards {
-        grid-template-columns: repeat(2, minmax(0, 1fr));
-      }
+      .wrap { width: min(100% - 16px, 1120px); }
+      .cards { grid-template-columns: repeat(2, minmax(0, 1fr)); }
     }
   </style>
 </head>
@@ -278,7 +208,7 @@
     <section class="hero">
       <h1>超精簡日文版卡圖</h1>
       <p class="sub">
-        只顯示日文卡名、卡相片和推出年份。畫面簡單，資料依賴也最少，適合只想快速看圖與年份。
+        只顯示日文卡名、卡相片和推出年份。這版加入 fallback 模糊搜尋，改善「找不到卡」的情況。
       </p>
 
       <form id="searchForm">
@@ -307,7 +237,7 @@
       </form>
 
       <div class="tips">
-        這版只做日文名稱搜尋，不做英文轉換，也不顯示其他詳細卡牌欄位。
+        先用 API 名稱搜尋，找不到時再做多頁模糊比對。
       </div>
     </section>
 
@@ -319,10 +249,6 @@
 
       <div id="resultsArea">
         <div class="empty">請輸入日文名稱，例如 ピカチュウ。</div>
-      </div>
-
-      <div class="footnote">
-        TCGdex 提供多語言卡片資料，日文可用；set 資料含 `releaseDate`，卡片清單含 `name` 與 `image`，所以這版只保留最穩定的圖與年份顯示。[page:2][page:1]
       </div>
     </section>
   </div>
@@ -336,11 +262,9 @@
     const resultsArea = document.getElementById('resultsArea');
 
     let currentCards = [];
-    let pageOffset = 0;
-    let canLoadMore = false;
-    let currentKeyword = '';
 
-    const PAGE_SIZE = 48;
+    const PAGE_SIZE = 60;
+    const FALLBACK_SCAN_PAGES = 6;
 
     function escapeHtml(str = '') {
       return String(str).replace(/[&<>'"]/g, char => ({
@@ -350,6 +274,10 @@
         '"': '&quot;',
         "'": '&#39;'
       }[char]));
+    }
+
+    function normalizeText(value) {
+      return String(value || '').trim().replace(/\s+/g, '');
     }
 
     function getCardName(card) {
@@ -362,7 +290,6 @@
 
     function getCardImageCandidates(card) {
       let base = '';
-
       if (typeof card.image === 'string') {
         base = card.image;
       } else if (card.image && typeof card.image === 'object') {
@@ -370,10 +297,7 @@
       }
 
       if (!base) return [];
-
-      if (/\.(png|jpg|jpeg|webp)$/i.test(base)) {
-        return [base];
-      }
+      if (/\.(png|jpg|jpeg|webp)$/i.test(base)) return [base];
 
       return [
         `${base}/low.webp`,
@@ -433,24 +357,47 @@
       if (!response.ok) {
         throw new Error(`API 請求失敗：${response.status}`);
       }
-
       return await response.json();
     }
 
-    async function fetchJapaneseCardsByName(keyword, offset = 0) {
+    async function fetchJapaneseCardsByName(keyword) {
       const url = new URL('https://api.tcgdex.net/v2/ja/cards');
       url.searchParams.set('name', keyword);
       url.searchParams.set('sort:field', 'releaseDate');
       url.searchParams.set('sort:order', sortMode.value === 'oldest' ? 'ASC' : 'DESC');
       url.searchParams.set('pagination:itemsPerPage', String(PAGE_SIZE));
-      url.searchParams.set('pagination:offset', String(offset));
+      url.searchParams.set('pagination:page', '1');
 
       const data = await safeJsonFetch(url.toString());
-
       if (Array.isArray(data)) return data;
       if (Array.isArray(data.cards)) return data.cards;
       if (Array.isArray(data.data)) return data.data;
       return [];
+    }
+
+    async function fallbackScanByName(keyword) {
+      const q = normalizeText(keyword);
+      let all = [];
+
+      for (let page = 1; page <= FALLBACK_SCAN_PAGES; page += 1) {
+        statusEl.textContent = `找不到精準結果，正在做模糊搜尋（第 ${page}/${FALLBACK_SCAN_PAGES} 頁）`;
+        const url = new URL('https://api.tcgdex.net/v2/ja/cards');
+        url.searchParams.set('sort:field', 'releaseDate');
+        url.searchParams.set('sort:order', 'DESC');
+        url.searchParams.set('pagination:itemsPerPage', String(PAGE_SIZE));
+        url.searchParams.set('pagination:page', String(page));
+
+        const data = await safeJsonFetch(url.toString());
+        const pageCards = Array.isArray(data) ? data : (data.cards || data.data || []);
+        if (!pageCards.length) break;
+
+        const matched = pageCards.filter(card => normalizeText(getCardName(card)).includes(q));
+        all = all.concat(matched);
+
+        if (pageCards.length < PAGE_SIZE) break;
+      }
+
+      return dedupeCards(all);
     }
 
     function renderCards(cards) {
@@ -505,21 +452,10 @@
         `;
       }).join('');
 
-      const moreHtml = canLoadMore ? `
-        <div class="more-wrap">
-          <button class="btn" id="loadMoreBtn" type="button">載入更多</button>
-        </div>
-      ` : '';
-
-      resultsArea.innerHTML = `<div class="cards">${html}</div>${moreHtml}`;
-
-      const loadMoreBtn = document.getElementById('loadMoreBtn');
-      if (loadMoreBtn) {
-        loadMoreBtn.addEventListener('click', handleLoadMore);
-      }
+      resultsArea.innerHTML = `<div class="cards">${html}</div>`;
     }
 
-    async function runSearch(reset = true) {
+    async function runSearch() {
       const rawInput = keywordInput.value.trim();
 
       if (!rawInput) {
@@ -528,22 +464,18 @@
         return;
       }
 
-      if (reset) {
-        currentKeyword = rawInput;
-        pageOffset = 0;
-        currentCards = [];
-        canLoadMore = false;
-        resultsArea.innerHTML = '<div class="empty">正在搜尋日文卡圖...</div>';
-      }
+      resultsArea.innerHTML = '<div class="empty">正在搜尋日文卡圖...</div>';
 
       try {
-        const fetched = await fetchJapaneseCardsByName(currentKeyword, pageOffset);
-        const merged = reset ? fetched : dedupeCards(currentCards.concat(fetched));
-        const sorted = sortCards(merged, sortMode.value);
-        canLoadMore = fetched.length === PAGE_SIZE;
+        let cards = await fetchJapaneseCardsByName(rawInput);
 
+        if (!cards.length) {
+          cards = await fallbackScanByName(rawInput);
+        }
+
+        const sorted = sortCards(cards, sortMode.value);
         renderCards(sorted);
-        statusEl.textContent = `搜尋：${currentKeyword}，目前顯示 ${sorted.length} 張卡片。`;
+        statusEl.textContent = `搜尋：${rawInput}，目前顯示 ${sorted.length} 張卡片。`;
       } catch (error) {
         statusEl.textContent = '搜尋失敗';
         resultsArea.innerHTML = `
@@ -555,14 +487,9 @@
       }
     }
 
-    async function handleLoadMore() {
-      pageOffset += PAGE_SIZE;
-      await runSearch(false);
-    }
-
     searchForm.addEventListener('submit', async (event) => {
       event.preventDefault();
-      await runSearch(true);
+      await runSearch();
     });
 
     sortMode.addEventListener('change', () => {
@@ -581,9 +508,6 @@
       keywordInput.value = '';
       sortMode.value = 'latest';
       currentCards = [];
-      pageOffset = 0;
-      canLoadMore = false;
-      currentKeyword = '';
       statusEl.textContent = '已清空。';
       resultsArea.innerHTML = '<div class="empty">請輸入日文名稱，例如 ピカチュウ。</div>';
     });
