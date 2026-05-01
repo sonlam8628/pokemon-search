@@ -87,6 +87,7 @@
       padding: 12px;
       display: grid;
       gap: 6px;
+      font-size: 14px;
     }
     .debug-line {
       font-size: 14px;
@@ -128,17 +129,17 @@
       <form id="searchForm">
         <div class="grid">
           <div class="field" id="fieldName">
-            abel for="pokemonName">Pokemon 名稱</label>
+            <label for="pokemonName">Pokemon 名稱</label>
             <input id="pokemonName" type="text" placeholder="例如 Pikachu / Charizard / Mew" />
           </div>
 
           <div class="field hidden" id="fieldSetId">
-            abel for="setId">Set ID</label>
+            <label for="setId">Set ID</label>
             <input id="setId" type="text" placeholder="例如 base1 / sv3 / swsh4" />
           </div>
 
           <div class="field hidden" id="fieldNumber">
-            abel for="cardNumber">卡號</label>
+            <label for="cardNumber">卡號</label>
             <input id="cardNumber" type="text" placeholder="例如 4 / 25 / 141" />
           </div>
         </div>
@@ -223,7 +224,6 @@
       const url = new URL(apiBase);
       url.searchParams.set('q', query);
       url.searchParams.set('pageSize', '12');
-      url.searchParams.set('select', 'id,name,number,hp,rarity,images.small,images.large,set.id,set.name');
 
       const response = await fetch(url.toString(), {
         headers: {
