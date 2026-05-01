@@ -4,7 +4,7 @@
   <meta charset="UTF-8" />
   <meta name="viewport" content="width=device-width, initial-scale=1.0" />
   <title>Pokemon 卡牌查詢（日文輸入支援）</title>
-  <meta name="description" content="可輸入日文或英文 Pokemon 名稱，自動轉英文後查詢 Pokemon TCG 卡牌圖案。">
+  <meta name="description" content="支援日文或英文 Pokemon 名稱輸入，自動轉英文查詢 Pokemon TCG 卡牌，並可依系列與種類排序。">
   <style>
     :root {
       --bg: #f6f3ee;
@@ -36,7 +36,7 @@
     }
 
     .wrap {
-      width: min(1150px, calc(100% - 24px));
+      width: min(1180px, calc(100% - 24px));
       margin: 0 auto;
       padding: 24px 0 48px;
     }
@@ -64,7 +64,7 @@
     .sub {
       margin: 0 0 18px;
       color: var(--muted);
-      max-width: 760px;
+      max-width: 860px;
       line-height: 1.6;
     }
 
@@ -96,9 +96,14 @@
       color: #fff;
     }
 
+    .main-btn:disabled {
+      opacity: 0.6;
+      cursor: not-allowed;
+    }
+
     .grid {
       display: grid;
-      grid-template-columns: 1.15fr 0.75fr;
+      grid-template-columns: 1.1fr 0.8fr;
       gap: 12px;
       margin-bottom: 14px;
     }
@@ -247,6 +252,12 @@
       line-height: 1.7;
     }
 
+    .more-wrap {
+      display: flex;
+      justify-content: center;
+      margin-top: 22px;
+    }
+
     .footnote {
       margin-top: 14px;
       color: var(--muted);
@@ -329,7 +340,7 @@
 
     @media (max-width: 520px) {
       .wrap {
-        width: min(100% - 16px, 1150px);
+        width: min(100% - 16px, 1180px);
       }
       .cards {
         grid-template-columns: 1fr;
@@ -341,7 +352,7 @@
   <div class="wrap">
     <section class="hero">
       <h1>Pokemon 卡牌查詢（日文輸入支援）</h1>
-      <p class="sub">你可以直接輸入日文名，例如「ピカチュウ」、「リザードン」、「イーブイ」。系統會先嘗試辨識為日文 Pokémon 名稱，再轉成英文官方名去查卡圖。</p>
+      <p class="sub">可輸入日文或英文 Pokémon 名稱。系統會先把日文名稱轉成英文官方名，再用 Pokémon TCG API 查卡牌。預設卡號由小至大，並可切換為最新系列、最舊系列或卡片種類排序。</p>
 
       <form id="searchForm">
         <div class="grid">
@@ -351,11 +362,12 @@
           </div>
 
           <div class="field">
-            <label for="limit">顯示張數</label>
-            <select id="limit">
-              <option value="12">12</option>
-              <option value="24" selected>24</option>
-              <option value="36">36</option>
+            <label for="sortBy">排列方式</label>
+            <select id="sortBy">
+              <option value="number">卡號（小至大）</option>
+              <option value="-set.releaseDate,number">最新系列</option>
+              <option value="set.releaseDate,number">最舊系列</option>
+              <option value="supertype,number">卡片種類</option>
             </select>
           </div>
         </div>
@@ -369,7 +381,7 @@
       </form>
 
       <div class="tips">
-        支援示例：ピカチュウ、リザードン、フシギダネ、ゼニガメ、イーブイ、Pikachu、Charizard。
+        支援示例：ピカチュウ、リザードン、イーブイ、フシギダネ、Pikachu、Charizard。
       </div>
     </section>
 
@@ -384,7 +396,7 @@
       </div>
 
       <div class="footnote">
-        圖片與卡片資料來自 Pokémon TCG API，該 API 的 card object 提供 `images.small` 和 `images.large` 欄位；這也是你前面已驗證成功可顯示卡圖的資料來源。[web:24][web:167]
+        Pokémon TCG API 的 search 端點支援 `orderBy` 排序，而 card object 也提供 `supertype`、`number`、`set.releaseDate` 與 `images.small` / `images.large` 等欄位。[web:1][web:24][web:19]
       </div>
     </section>
   </div>
@@ -406,7 +418,7 @@
 
   <script>
     const keywordInput = document.getElementById('keyword');
-    const limitSelect = document.getElementById('limit');
+    const sortBySelect = document.getElementById('sortBy');
     const searchForm = document.getElementById('searchForm');
     const statusEl = document.getElementById('status');
     const resultsArea = document.getElementById('resultsArea');
@@ -426,6 +438,11 @@
 
     let currentCards = [];
     let lastResolvedName = '';
+    let lastQueryName = '';
+    let lastOrderBy = 'number';
+    let currentPage = 1;
+    let hasMore = false;
+    const PAGE_SIZE = 250;
 
     function escapeHtml(str = '') {
       return String(str).replace(/[&<>'"]/g, char => ({
@@ -493,10 +510,12 @@
       };
     }
 
-    async function searchCardsByEnglishName(englishName, limit) {
+    async function searchCardsByEnglishName(englishName, orderBy, page = 1) {
       const url = new URL('https://api.pokemontcg.io/v2/cards');
       url.searchParams.set('q', `name:${englishName}`);
-      url.searchParams.set('pageSize', String(limit));
+      url.searchParams.set('orderBy', orderBy || 'number');
+      url.searchParams.set('pageSize', String(PAGE_SIZE));
+      url.searchParams.set('page', String(page));
 
       const response = await fetch(url.toString(), {
         headers: { 'Accept': 'application/json' }
@@ -536,52 +555,70 @@
       modalImg.removeAttribute('src');
     }
 
-    function renderCards(cards) {
-      currentCards = cards;
+    function getSortLabel(orderBy) {
+      if (orderBy === '-set.releaseDate,number') return '最新系列';
+      if (orderBy === 'set.releaseDate,number') return '最舊系列';
+      if (orderBy === 'supertype,number') return '卡片種類';
+      return '卡號（小至大）';
+    }
 
-      if (!cards.length) {
+    function renderCards(cards, append = false) {
+      if (!append) {
+        currentCards = cards;
+      } else {
+        currentCards = currentCards.concat(cards);
+      }
+
+      if (!currentCards.length) {
         resultsArea.innerHTML = '<div class="empty">找不到結果。請試另一個日文名或英文名。</div>';
         return;
       }
 
-      resultsArea.innerHTML = `
-        <div class="cards">
-          ${cards.map((card, index) => {
-            const smallImage = card.images?.small || '';
-            const rarity = card.rarity || '未標示';
-            const hp = card.hp ? `HP ${card.hp}` : '';
+      const cardsHtml = currentCards.map((card, index) => {
+        const smallImage = card.images?.small || '';
+        const rarity = card.rarity || '未標示';
+        const hp = card.hp ? `HP ${card.hp}` : '';
 
-            return `
-              <article class="card">
-                <button class="card-thumb" type="button" data-index="${index}" aria-label="開啟 ${escapeHtml(card.name)} 大圖">
-                  ${smallImage ? `
-                    <img
-                      src="${escapeHtml(smallImage)}"
-                      alt="${escapeHtml(card.name)} 卡圖"
-                      loading="lazy"
-                      width="245"
-                      height="342"
-                      onerror="this.style.display='none'; this.nextElementSibling.style.display='grid';"
-                    >
-                    <div class="fallback" style="display:none;">圖片暫時無法載入</div>
-                  ` : `
-                    <div class="fallback">沒有圖片資料</div>
-                  `}
-                </button>
-                <div class="meta">
-                  <h3>${escapeHtml(card.name || '未命名卡片')}</h3>
-                  <div class="badges">
-                    <span class="badge">#${escapeHtml(card.number || '-')}</span>
-                    <span class="badge">${escapeHtml(rarity)}</span>
-                    ${hp ? `<span class="badge">${escapeHtml(hp)}</span>` : ''}
-                  </div>
-                  <div class="small">${escapeHtml(card.set?.name || '未知系列')}</div>
-                  <div class="small">set id：${escapeHtml(card.set?.id || 'N/A')}</div>
-                </div>
-              </article>
-            `;
-          }).join('')}
+        return `
+          <article class="card">
+            <button class="card-thumb" type="button" data-index="${index}" aria-label="開啟 ${escapeHtml(card.name)} 大圖">
+              ${smallImage ? `
+                <img
+                  src="${escapeHtml(smallImage)}"
+                  alt="${escapeHtml(card.name)} 卡圖"
+                  loading="lazy"
+                  width="245"
+                  height="342"
+                  onerror="this.style.display='none'; this.nextElementSibling.style.display='grid';"
+                >
+                <div class="fallback" style="display:none;">圖片暫時無法載入</div>
+              ` : `
+                <div class="fallback">沒有圖片資料</div>
+              `}
+            </button>
+            <div class="meta">
+              <h3>${escapeHtml(card.name || '未命名卡片')}</h3>
+              <div class="badges">
+                <span class="badge">#${escapeHtml(card.number || '-')}</span>
+                <span class="badge">${escapeHtml(rarity)}</span>
+                ${hp ? `<span class="badge">${escapeHtml(hp)}</span>` : ''}
+              </div>
+              <div class="small">${escapeHtml(card.set?.name || '未知系列')}</div>
+              <div class="small">種類：${escapeHtml(card.supertype || '未標示')}</div>
+            </div>
+          </article>
+        `;
+      }).join('');
+
+      const moreHtml = hasMore ? `
+        <div class="more-wrap">
+          <button class="main-btn" id="loadMoreBtn" type="button">載入更多</button>
         </div>
+      ` : '';
+
+      resultsArea.innerHTML = `
+        <div class="cards">${cardsHtml}</div>
+        ${moreHtml}
       `;
 
       document.querySelectorAll('[data-index]').forEach(button => {
@@ -590,6 +627,27 @@
           if (card) openModal(card);
         });
       });
+
+      const loadMoreBtn = document.getElementById('loadMoreBtn');
+      if (loadMoreBtn) {
+        loadMoreBtn.addEventListener('click', loadMoreCards);
+      }
+    }
+
+    async function loadMoreCards() {
+      try {
+        const nextPage = currentPage + 1;
+        statusEl.textContent = `正在載入更多... 目前已顯示 ${currentCards.length} 張`;
+        const moreCards = await searchCardsByEnglishName(lastQueryName, lastOrderBy, nextPage);
+
+        currentPage = nextPage;
+        hasMore = moreCards.length === PAGE_SIZE;
+
+        renderCards(moreCards, true);
+        statusEl.textContent = `輸入：${keywordInput.value.trim()} → 查詢名稱：${lastResolvedName}，排序：${getSortLabel(lastOrderBy)}，目前顯示 ${currentCards.length} 張卡片。`;
+      } catch (error) {
+        statusEl.textContent = `載入更多失敗：${error.message || '未知錯誤'}`;
+      }
     }
 
     fillDemoJa.addEventListener('click', () => {
@@ -602,16 +660,22 @@
 
     clearBtn.addEventListener('click', () => {
       keywordInput.value = '';
+      sortBySelect.value = 'number';
       statusEl.textContent = '已清空。';
       resultsArea.innerHTML = '<div class="empty">請輸入日文或英文 Pokémon 名稱。</div>';
       lastResolvedName = '';
+      lastQueryName = '';
+      lastOrderBy = 'number';
+      currentPage = 1;
+      hasMore = false;
+      currentCards = [];
     });
 
     searchForm.addEventListener('submit', async (event) => {
       event.preventDefault();
 
       const keyword = keywordInput.value.trim();
-      const limit = Number(limitSelect.value || '24');
+      const orderBy = sortBySelect.value || 'number';
 
       if (!keyword) {
         statusEl.textContent = '請先輸入名稱。';
@@ -624,13 +688,17 @@
 
         const resolved = await resolvePokemonName(keyword);
         lastResolvedName = resolved.resolvedEnglishName;
+        lastQueryName = resolved.resolvedEnglishName;
+        lastOrderBy = orderBy;
+        currentPage = 1;
 
         statusEl.textContent = `已辨識為：${resolved.resolvedEnglishName}，正在查詢卡片...`;
 
-        const cards = await searchCardsByEnglishName(resolved.resolvedEnglishName, limit);
+        const cards = await searchCardsByEnglishName(resolved.resolvedEnglishName, orderBy, 1);
+        hasMore = cards.length === PAGE_SIZE;
 
-        statusEl.textContent = `輸入：${resolved.originalInput} → 查詢名稱：${resolved.resolvedEnglishName}，共找到 ${cards.length} 張卡片。`;
-        renderCards(cards);
+        statusEl.textContent = `輸入：${resolved.originalInput} → 查詢名稱：${resolved.resolvedEnglishName}，排序：${getSortLabel(orderBy)}，目前顯示 ${cards.length} 張卡片。`;
+        renderCards(cards, false);
       } catch (error) {
         statusEl.textContent = '搜尋失敗';
         resultsArea.innerHTML = `<div class="empty">${escapeHtml(error.message || '發生未知錯誤。')}</div>`;
