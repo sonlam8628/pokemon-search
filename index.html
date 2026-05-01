@@ -1,203 +1,146 @@
 <!DOCTYPE html>
 <html lang="zh-Hant">
 <head>
-  <meta charset="UTF-8">
-  <meta name="viewport" content="width=device-width, initial-scale=1.0">
-  <title>Pokémon卡牌搜尋 - 保證顯示版</title>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>Pokémon Card Search</title>
   <style>
-    body{font-family:system-ui;background:#f0f2f5;padding:20px;max-width:1400px;margin:0 auto}
-    .container{display:flex;gap:20px;height:90vh}
-    .left{width:30%;background:white;border-radius:12px;padding:20px;box-shadow:0 2px 10px rgba(0,0,0,0.1);overflow:auto}
-    .center{width:40%;background:#fafbfc;border-radius:12px;padding:20px;box-shadow:0 2px 10px rgba(0,0,0,0.1);overflow:auto}
-    .right{width:30%;background:white;border-radius:12px;padding:20px;box-shadow:0 2px 10px rgba(0,0,0,0.1);overflow:auto}
-    input,select,button{padding:12px 16px;border:1px solid #ddd;border-radius:8px;font-size:16px}
-    button{background:#2563eb;color:white;border:none;cursor:pointer;transition:background .2s}
-    button:hover{background:#1d4ed8}
-    .search-row{display:flex;gap:10px;margin-bottom:20px}
-    input{flex:1}
-    .filters{display:grid;grid-template-columns:1fr 1fr;gap:10px;margin-bottom:20px}
-    .cards{display:grid;grid-template-columns:repeat(auto-fill,minmax(130px,1fr));gap:15px}
-    .card{cursor:pointer;border:2px solid #e5e7eb;border-radius:12px;padding:12px;text-align:center;transition:all .2s}
-    .card:hover{transform:translateY(-2px);box-shadow:0 8px 25px rgba(0,0,0,0.15);border-color:#2563eb}
-    .card img{width:100%;height:90px;object-fit:cover;border-radius:8px}
-    .card-name{font-weight:600;font-size:14px;margin:8px 0 4px}
-    .card-id{font-size:12px;color:#666}
-    .detail-img{width:100%;max-height:280px;object-fit:cover;border-radius:12px;margin-bottom:20px}
-    .summary{background:#f3f4f6;padding:20px;border-radius:12px;margin:20px 0;white-space:pre-wrap;font-family:monospace}
-    .price-grid{display:grid;grid-template-columns:1fr 1fr;gap:10px;margin:20px 0}
-    .price-item{background:#f8fafc;padding:12px;border-radius:8px;text-align:center}
-    .external-btn{width:100%;margin:5px 0;background:#059669}
-    .external-btn:hover{background:#047857}
-    #status{padding:12px;background:#fef3c7;border-radius:8px;margin:10px 0;color:#92400e}
-    @media(max-width:1200px){.container{flex-direction:column;height:auto}}
+    :root{--bg:#f6f7fb;--card:#fff;--line:#e5e7eb;--text:#111827;--muted:#6b7280;--pri:#2563eb}
+    *{box-sizing:border-box} body{margin:0;font-family:system-ui,-apple-system,Segoe UI,Roboto,sans-serif;background:var(--bg);color:var(--text)}
+    .app{display:grid;grid-template-columns:340px 1fr 330px;min-height:100vh}
+    .col{background:var(--card);border-right:1px solid var(--line);overflow:auto;padding:16px}
+    .col:last-child{border-right:none} .center{background:#fafbff}
+    h1,h2{margin:0 0 12px} h1{font-size:20px} h2{font-size:18px}
+    input,select,button,textarea{width:100%;padding:10px 12px;border:1px solid var(--line);border-radius:10px;font:inherit;background:#fff}
+    button{background:var(--pri);color:#fff;border:none;cursor:pointer} button:hover{filter:brightness(.95)}
+    .row{display:flex;gap:8px} .row > *{flex:1}
+    .stack{display:flex;flex-direction:column;gap:8px}
+    .grid{display:grid;grid-template-columns:repeat(auto-fill,minmax(120px,1fr));gap:10px;margin-top:12px}
+    .card{border:1px solid var(--line);border-radius:14px;padding:8px;cursor:pointer;background:#fff}
+    .card.sel{outline:2px solid #93c5fd} .card img{width:100%;height:86px;object-fit:cover;border-radius:10px;background:#f3f4f6}
+    .name{font-weight:600;font-size:13px;margin-top:6px;line-height:1.25} .sub{font-size:12px;color:var(--muted)}
+    .box{border:1px solid var(--line);border-radius:16px;padding:14px;background:#fff;margin-bottom:12px}
+    .detail-img{width:100%;max-height:320px;object-fit:contain;background:#f3f4f6;border-radius:16px;border:1px solid var(--line)}
+    .kv{display:grid;grid-template-columns:110px 1fr;gap:8px 10px;font-size:14px} .k{color:var(--muted)}
+    textarea{min-height:180px;resize:vertical;font-family:ui-monospace,SFMono-Regular,Menlo,monospace;font-size:12px;line-height:1.5}
+    .small{font-size:12px;color:var(--muted)} .sep{height:1px;background:var(--line);margin:12px 0}
+    .chips{display:flex;flex-wrap:wrap;gap:8px} .chip{padding:6px 10px;border:1px solid var(--line);border-radius:999px;background:#fff;font-size:12px;cursor:pointer}
+    .chip.active{background:#dbeafe;border-color:#93c5fd;color:#1d4ed8}
+    @media (max-width: 1100px){.app{grid-template-columns:1fr}.col{border-right:none;border-bottom:1px solid var(--line)}}
   </style>
 </head>
 <body>
-<div class="container">
-  <!-- 左: 搜尋+列表 -->
-  <div class="left">
-    <h2>🔍 卡牌搜尋</h2>
-    <div class="search-row">
-      <input id="search" placeholder="Pikachu, チャーレム, 001/165" oninput="filterCards()">
-      <button onclick="clearSearch()">清除</button>
+<div class="app">
+  <section class="col left">
+    <h1>Pokémon Card Search</h1>
+    <div class="small">極簡版：搜尋、詳情、摘要、收藏、匯出。</div>
+    <div class="sep"></div>
+    <div class="stack">
+      <input id="q" placeholder="輸入 Pikachu / 25 / SV2a / 001" />
+      <div class="row">
+        <button id="searchBtn">搜尋</button>
+        <button id="resetBtn">重置</button>
+      </div>
+      <div class="row">
+        <select id="apiMode">
+          <option value="tcgdex">TCGdex（日文）</option>
+          <option value="ptcg">Pokémon TCG API（英文）</option>
+        </select>
+        <select id="sortMode">
+          <option value="new">新至舊</option>
+          <option value="old">舊至新</option>
+          <option value="az">名稱 A-Z</option>
+        </select>
+      </div>
+      <div class="row">
+        <select id="typeFilter"><option value="all">所有類型</option><option value="Pokémon">Pokémon</option><option value="Trainer">Trainer</option><option value="Energy">Energy</option></select>
+        <select id="rarityFilter"><option value="all">所有稀有度</option><option value="Common">Common</option><option value="Uncommon">Uncommon</option><option value="Rare">Rare</option><option value="Ultra Rare">Ultra Rare</option><option value="Promo">Promo</option></select>
+      </div>
+      <div id="yearChips" class="chips"></div>
+      <div id="status" class="small">等待搜尋。</div>
     </div>
-    <div class="filters">
-      <select id="typeFilter" onchange="filterCards()"><option>所有類型</option><option>Pokémon</option><option>Trainer</option></select>
-      <select id="rarityFilter" onchange="filterCards()"><option>所有稀有度</option><option>Common</option><option>Rare</option><option>Holo</option></select>
-    </div>
-    <div id="cards" class="cards"></div>
-    <div id="status"></div>
-  </div>
+    <div class="sep"></div>
+    <div id="list" class="grid"></div>
+  </section>
 
-  <!-- 中: 詳情 -->
-  <div class="center">
-    <h2>📋 卡片詳情</h2>
-    <div id="detail" style="text-align:center;color:#999;padding:40px">
-      點擊左側卡片查看完整資料<br><small>支援: 名稱/編號/稀有度/插畫師/描述</small>
+  <section class="col center">
+    <h2>卡片詳情</h2>
+    <div id="detailEmpty" class="box small">請先搜尋並選擇一張卡。</div>
+    <div id="detailWrap" style="display:none">
+      <img id="detailImg" class="detail-img" alt="card" />
+      <div class="sep"></div>
+      <div class="box">
+        <div class="kv" id="detailKV"></div>
+      </div>
+      <div class="box">
+        <h2 style="font-size:16px;margin-bottom:8px">描述 / 背景</h2>
+        <div id="detailText" class="small"></div>
+      </div>
     </div>
-  </div>
+  </section>
 
-  <!-- 右: 工作區 -->
-  <div class="right">
-    <h2>💼 工作區</h2>
-    <div id="summary" class="summary">請選擇卡片生成摘要</div>
-    <button onclick="copySummary()" style="width:100%">📋 複製摘要</button>
-    <button onclick="exportTXT()" style="width:100%;background:#ea580c">📄 匯出 TXT</button>
-    <button onclick="exportCSV()" style="width:100%;background:#16a34a">📊 匯出 CSV</button>
-    
-    <h3>💰 價格參考</h3>
-    <div class="price-grid">
-      <div class="price-item"><strong>SNKRDUNK</strong><br>¥4,800</div>
-      <div class="price-item"><strong>eBay</strong><br>$42</div>
-      <div class="price-item"><strong>SportsCardsPro</strong><br>$48</div>
-      <div class="price-item"><strong>PSA Pop Report</strong><br><button onclick="openPSA()" style="font-size:12px;padding:4px">查看</button></div>
+  <section class="col right">
+    <h2>工作區</h2>
+    <div class="box">
+      <div class="small" style="margin-bottom:6px">摘要</div>
+      <textarea id="summary" readonly></textarea>
+      <div class="row" style="margin-top:8px">
+        <button id="copyBtn">複製</button>
+        <button id="txtBtn">TXT</button>
+        <button id="csvBtn">CSV</button>
+      </div>
     </div>
-    
-    <div style="margin-top:30px">
-      <h3>🔗 外部網站</h3>
-      <button class="external-btn" onclick="openLink('snkrdunk')">SNKRDUNK 搜尋</button>
-      <button class="external-btn" onclick="openLink('sportscardspro')">SportsCardsPro</button>
-      <button class="external-btn" onclick="openLink('ebay')">eBay</button>
-      <button class="external-btn" onclick="openLink('tcg')">Pokemon.com TCG</button>
+    <div class="box">
+      <div class="row">
+        <button id="favBtn">收藏切換</button>
+        <button id="favExportBtn">匯出收藏</button>
+      </div>
+      <div id="favCount" class="small" style="margin-top:8px">收藏 0 張</div>
+      <div id="favList" class="small" style="margin-top:8px"></div>
     </div>
-  </div>
+    <div class="box">
+      <h2 style="font-size:16px">外部參考</h2>
+      <button id="snkrBtn" style="margin-top:8px">SNKRDUNK</button>
+      <button id="ebayBtn" style="margin-top:8px">eBay</button>
+      <button id="psaBtn" style="margin-top:8px">PSA Population</button>
+      <a id="tcgdexLink" target="_blank" style="display:block;margin-top:8px;text-decoration:none"><button style="margin-top:0">TCGdex</button></a>
+      <a id="ptcgLink" target="_blank" style="display:block;margin-top:8px;text-decoration:none"><button style="margin-top:0">Pokémon TCG</button></a>
+    </div>
+  </section>
 </div>
-
 <script>
-// 硬編碼熱門卡片資料庫 (50+張，涵蓋經典+新卡)
-const cardDatabase = [
-  {id:1,name:"ピカチュウ",eng:"Pikachu",number:"25/102",rarity:"Rare Holo",type:"Pokémon",artist:"Mitsuhiro Arita",hp:60,image:"https://images.pokemontcg.io/base1/58_hires.png",set:"Base Set",year:1999,desc:"50ダメージ。",price:{snkrdunk:4800,ebay:42}},
-  {id:2,name:"チャーレム",eng:"Charizard",number:"4/102",rarity:"Rare Holo",type:"Pokémon",artist:"Mitsuhiro Arita",hp:120,image:"https://images.pokemontcg.io/base1/4_hires.png",set:"Base Set",year:1999,desc:"火炎放射！",price:{snkrdunk:25000,ebay:350}},
-  {id:3,name:"リザードン",eng:"Blastoise",number:"2/102",rarity:"Rare Holo",type:"Pokémon",artist:"Mitsuhiro Arita",hp:100,image:"https://images.pokemontcg.io/base1/2_hires.png",set:"Base Set",year:1999},
-  {id:4,name:"ミュウ",eng:"Mew",number:"151/165",rarity:"Rare",type:"Pokémon",artist:"Kagemaru Himeno",hp:40,image:"https://images.pokemontcg.io/celebrations/151_hires.png",set:"Celebrations",year:2021},
-  // ... 更多卡片 (實際版有50+張經典卡)
-  {id:50,name:"スカーレット&バイオレット",eng:"SV-P Promo",number:"SV-P 001",rarity:"Promo",type:"Pokémon",image:"https://assets.tcgdex.net/ja/sv-promo/sv-p/1/high.png"}
+const $ = s => document.getElementById(s);
+const state = { cards: [], filtered: [], selected: null, year: 'all', favorites: JSON.parse(localStorage.getItem('pokemonFavorites') || '[]') };
+const demo = [
+  {id:'base1-58',name:'Pikachu',number:'58/102',localId:'58',rarity:'Common',category:'Pokémon',set:{name:'Base Set',releaseDate:'1999-01-09',id:'base1'},illustrator:'Mitsuhiro Arita',text:'',image:'https://images.pokemontcg.io/base1/58_hires.png'},
+  {id:'base1-4',name:'Charizard',number:'4/102',localId:'4',rarity:'Rare Holo',category:'Pokémon',set:{name:'Base Set',releaseDate:'1999-01-09',id:'base1'},illustrator:'Mitsuhiro Arita',text:'',image:'https://images.pokemontcg.io/base1/4_hires.png'},
+  {id:'swshp-063',name:'Pikachu V',number:'SWSH063',localId:'063',rarity:'Promo',category:'Pokémon',set:{name:'Sword & Shield Promo',releaseDate:'2020-02-07',id:'swshp'},illustrator:'sowsow',text:'',image:'https://images.pokemontcg.io/swshp/063_hires.png'}
 ];
-
-let filteredCards = [...cardDatabase];
-let selectedCard = null;
-
-// 搜尋過濾
-function filterCards() {
-  const query = document.getElementById('search').value.toLowerCase();
-  const type = document.getElementById('typeFilter').value;
-  const rarity = document.getElementById('rarityFilter').value;
-  
-  filteredCards = cardDatabase.filter(card => 
-    (card.name.toLowerCase().includes(query) || 
-     card.eng.toLowerCase().includes(query) || 
-     card.number.includes(query)) &&
-    (!type || card.type === type) &&
-    (!rarity || card.rarity.includes(rarity))
-  );
-  
-  renderCards();
-  document.getElementById('status').textContent = `找到 ${filteredCards.length} 張卡片`;
-}
-
-// 渲染卡片牆
-function renderCards() {
-  const container = document.getElementById('cards');
-  container.innerHTML = filteredCards.map(card => `
-    <div class="card" onclick="showDetail('${card.id}')">
-      <img src="${card.image}" onerror="this.src='https://via.placeholder.com/130x90/eee?text=${card.eng}'">
-      <div class="card-name">${card.name}</div>
-      <div class="card-id">${card.number} ${card.rarity}</div>
-    </div>
-  `).join('');
-}
-
-// 顯示詳情
-function showDetail(id) {
-  selectedCard = cardDatabase.find(c => c.id == id);
-  if (!selectedCard) return;
-  
-  document.getElementById('detail').innerHTML = `
-    <img class="detail-img" src="${selectedCard.image}" onerror="this.src='https://via.placeholder.com/400x280/eee?text=${selectedCard.eng}'">
-    <h3>${selectedCard.eng} / ${selectedCard.name}</h3>
-    <p><strong>編號:</strong> ${selectedCard.number} | <strong>稀有度:</strong> ${selectedCard.rarity}</p>
-    <p><strong>類型:</strong> ${selectedCard.type} | <strong>HP:</strong> ${selectedCard.hp || 'N/A'}</p>
-    <p><strong>系列:</strong> ${selectedCard.set} (${selectedCard.year || 'N/A'})</p>
-    <p><strong>插畫師:</strong> ${selectedCard.artist || 'N/A'}</p>
-    <p>${selectedCard.desc || '詳細資料...'}</p>
-  `;
-  
-  updateSummary();
-}
-
-// 更新摘要
-function updateSummary() {
-  if (!selectedCard) return;
-  const text = `${selectedCard.eng} ${selectedCard.number} ${selectedCard.rarity} ${selectedCard.type} Illustrator:${selectedCard.artist}`;
-  document.getElementById('summary').textContent = text;
-}
-
-// 複製/匯出
-function copySummary() {
-  if (!selectedCard) return alert('請先選卡片');
-  navigator.clipboard.writeText(document.getElementById('summary').textContent);
-  alert('已複製！');
-}
-function exportTXT() {
-  const txt = filteredCards.map(c => `${c.eng} ${c.number}`).join('\n');
-  download('cards.txt', txt);
-}
-function exportCSV() {
-  const csv = '英文名,編號,稀有度,類型\n' + filteredCards.map(c => `"${c.eng}","${c.number}","${c.rarity}","${c.type}"`).join('\n');
-  download('cards.csv', csv);
-}
-function download(name, content) {
-  const a = document.createElement('a');
-  a.href = URL.createObjectURL(new Blob([content]));
-  a.download = name; a.click();
-}
-
-// 外部連結
-function openLink(site) {
-  if (!selectedCard) return alert('請先選卡片');
-  const q = selectedCard.eng.replace(/ /g, '+') + '+pokemon+tcg';
-  const urls = {
-    snkrdunk: `https://snkrdunk.com/en/search?q=${q}`,
-    sportscardspro: `https://www.sportscardspro.com/search?q=${q}`,
-    ebay: `https://www.ebay.com/sch/i.html?_nkw=${q}`,
-    tcg: `https://www.pokemon.com/us/pokemon-tcg/pokemon-cards?card=${selectedCard.eng}`
-  };
-  window.open(urls[site], '_blank');
-}
-function openPSA() {
-  window.open('https://www.psacard.com/pop/tcg-cards/pokemon/', '_blank');
-}
-
-function clearSearch() {
-  document.getElementById('search').value = '';
-  document.getElementById('typeFilter').value = '所有類型';
-  document.getElementById('rarityFilter').value = '所有稀有度';
-  filterCards();
-}
-
-// 初始化
-renderCards();
-document.getElementById('status').textContent = '輸入 Pikachu 立即搜尋，或點擊卡片';
-  </script>
+function esc(v){return String(v ?? '').replace(/[&<>\"']/g,m=>({'&':'&amp;','<':'&lt;','>':'&gt;','\"':'&quot;',\"'\":'&#39;'}[m]))}
+function y(c){return c.set?.releaseDate ? new Date(c.set.releaseDate).getFullYear() : ''}
+function img(c){return c.image?.large || c.image?.small || c.image || c.images?.large || c.images?.small || 'https://via.placeholder.com/600x420?text=No+Image'}
+function setStatus(t){ $('status').textContent = t }
+function saveFav(){ localStorage.setItem('pokemonFavorites', JSON.stringify(state.favorites)); renderFav() }
+function isFav(id){ return state.favorites.some(x=>x.id===id) }
+function toggleFav(){ if(!state.selected) return; const i=state.favorites.findIndex(x=>x.id===state.selected.id); i>=0 ? state.favorites.splice(i,1) : state.favorites.push({id:state.selected.id,name:state.selected.name,number:state.selected.number,date:new Date().toISOString()}); saveFav() }
+function renderFav(){ $('favCount').textContent = `收藏 ${state.favorites.length} 張`; $('favList').innerHTML = state.favorites.slice(0,8).map(f=>`• ${esc(f.name)} ${esc(f.number||'')}`).join('<br>') || '尚無收藏'; }
+function sortCards(arr){ const m = $('sortMode').value; return [...arr].sort((a,b)=>{ const ay=+y(a)||0, by=+y(b)||0; if(m==='new') return by-ay; if(m==='old') return ay-by; return String(a.name||'').localeCompare(String(b.name||'')) }) }
+function filterLocal(){ const q=$('q').value.trim().toLowerCase(); const type=$('typeFilter').value; const rar=$('rarityFilter').value; const yr=state.year; state.filtered = sortCards(state.cards.filter(c=>{ const hay=[c.name,c.number,c.localId,c.id,c.set?.name,c.category,c.supertype,c.rarity].join(' ').toLowerCase(); return (!q || hay.includes(q)) && (type==='all' || String(c.category||c.supertype||'').includes(type)) && (rar==='all' || String(c.rarity||'').toLowerCase().includes(rar.toLowerCase())) && (yr==='all' || String(y(c))===String(yr)); })); }
+function renderList(){ const el=$('list'); if(!state.filtered.length){ el.innerHTML='<div class="small">沒有資料。</div>'; return; } el.innerHTML = state.filtered.map((c,i)=>`<div class="card ${state.selected?.id===c.id?'sel':''}" data-i="${i}"><img src="${esc(img(c))}" onerror="this.src='https://via.placeholder.com/300x220?text=No+Image'" /><div class="name">${esc(c.name)}</div><div class="sub">${esc(c.number||c.localId||'')}</div><div class="sub">${esc(c.rarity||'')}</div></div>`).join(''); [...el.querySelectorAll('.card')].forEach(node=>node.onclick=()=>selectCard(state.filtered[+node.dataset.i])); }
+function summary(c){ return [`Name: ${c.name}`,`ID: ${c.id}`,`Number: ${c.number||c.localId||''}`,`Set: ${c.set?.name||''}`,`Year: ${y(c)||''}`,`Type: ${c.category||c.supertype||''}`,`Rarity: ${c.rarity||''}`,`Illustrator: ${c.illustrator||c.artist||''}`,`Description: ${(c.text||c.description||'').replace(/\s+/g,' ').trim()}`].filter(Boolean).join('\n') }
+function selectCard(c){ state.selected=c; $('detailEmpty').style.display='none'; $('detailWrap').style.display='block'; $('detailImg').src=img(c); $('detailKV').innerHTML=[['Name',c.name],['ID',c.id],['Number',c.number||c.localId||''],['Set',c.set?.name||''],['Year',y(c)],['Type',c.category||c.supertype||''],['Rarity',c.rarity||''],['HP',c.hp||''],['Illustrator',c.illustrator||c.artist||'']].map(([k,v])=>`<div class="k">${esc(k)}</div><div>${esc(v||'—')}</div>`).join(''); $('detailText').textContent=c.text||c.description||'沒有描述。'; $('summary').value=summary(c); $('tcgdexLink').href=`https://tcgdex.dev/${c.set?.id||''}/${c.id||''}`; $('ptcgLink').href=`https://www.pokemon.com/us/pokemon-tcg/pokemon-cards/?card=${encodeURIComponent(c.name)}`; $('snkrBtn').onclick=()=>window.open(`https://snkrdunk.com/en/brands/pokemon/trading-cards?keyword=${encodeURIComponent(c.name+' '+(c.number||c.localId||''))}`,'_blank'); $('ebayBtn').onclick=()=>window.open(`https://www.ebay.com/sch/i.html?_nkw=${encodeURIComponent(c.name+' pokemon tcg')}`,'_blank'); $('psaBtn').onclick=()=>window.open('https://www.psacard.com/pop','_blank'); renderList() }
+function renderYears(){ const years=[...new Set(state.cards.map(y).filter(Boolean))].sort((a,b)=>b-a).slice(0,6); $('yearChips').innerHTML=['all',...years].map(v=>`<span class="chip ${state.year===v?'active':''}" data-y="${v}">${v==='all'?'所有年份':v}</span>`).join(''); [...$('yearChips').querySelectorAll('.chip')].forEach(ch=>ch.onclick=()=>{ state.year=ch.dataset.y; renderYears(); filterLocal(); renderList(); if(state.filtered[0]) selectCard(state.filtered[0]); }); }
+async function search(){ const q=$('q').value.trim(); if(!q){ setStatus('請輸入關鍵字。'); return } setStatus('搜尋中...'); let found=[]; try{ if($('apiMode').value==='ptcg'){ const r=await fetch(`https://api.pokemontcg.io/v2/cards?q=name:${encodeURIComponent(q)}`); const j=await r.json(); found=Array.isArray(j.data)?j.data.map(aPTCG):[] } else { const r=await fetch(`https://api.tcgdex.net/v2/ja/cards?name=${encodeURIComponent(q)}`); const j=await r.json(); found=Array.isArray(j)?j.map(aTCG):Array.isArray(j.data)?j.data.map(aTCG):[] } } catch(e){ found=[] } if(!found.length) found=demo.filter(c=>[c.name,c.number,c.localId,c.id].join(' ').toLowerCase().includes(q.toLowerCase())); state.cards=found; filterLocal(); renderYears(); renderList(); if(state.filtered[0]) selectCard(state.filtered[0]); setStatus(`找到 ${state.filtered.length} 張。`) }
+function aPTCG(c){ return {id:c.id,name:c.name,number:c.number,rarity:c.rarity,category:c.supertype,hp:c.hp,illustrator:c.artist,text:Array.isArray(c.text)?c.text.join(' '):c.text,set:{name:c.set?.name,releaseDate:c.set?.releaseDate,id:c.set?.id},image:c.images?.large||c.images?.small} }
+function aTCG(c){ return {id:c.id,name:c.name,number:c.number,localId:c.localId,rarity:c.rarity,category:c.category,hp:c.hp,illustrator:c.illustrator,text:c.text||c.description,set:c.set,image:c.image||c.images?.large||c.images?.small} }
+function dl(name,content,type='text/plain'){ const a=document.createElement('a'); a.href=URL.createObjectURL(new Blob([content],{type})); a.download=name; a.click() }
+function copy(){ navigator.clipboard.writeText($('summary').value||'').then(()=>setStatus('已複製。')) }
+function txt(){ dl('pokemon_cards.txt',(state.filtered.length?state.filtered:state.cards).map(summary).join('\n\n---\n\n')) }
+function csv(){ const rows=['name,id,number,set,year,type,rarity,illustrator']; (state.filtered.length?state.filtered:state.cards).forEach(c=>rows.push([c.name,c.id,c.number||c.localId||'',c.set?.name||'',y(c),c.category||c.supertype||'',c.rarity||'',c.illustrator||c.artist||''].map(v=>`"${String(v).replace(/"/g,'""')}"`).join(','))); dl('pokemon_cards.csv',rows.join('\n'),'text/csv') }
+function favCsv(){ const rows=['id,name,number,date']; state.favorites.forEach(f=>rows.push([f.id,f.name,f.number||'',f.date].map(v=>`"${String(v).replace(/"/g,'""')}"`).join(','))); dl('favorites.csv',rows.join('\n'),'text/csv') }
+function reset(){ $('q').value=''; $('apiMode').value='tcgdex'; $('sortMode').value='new'; $('typeFilter').value='all'; $('rarityFilter').value='all'; state.year='all'; state.cards=[]; state.filtered=[]; state.selected=null; $('list').innerHTML=''; $('detailEmpty').style.display='block'; $('detailWrap').style.display='none'; $('summary').value=''; renderYears(); renderFav(); setStatus('已重置。') }
+$('searchBtn').onclick=search; $('resetBtn').onclick=reset; $('copyBtn').onclick=copy; $('txtBtn').onclick=txt; $('csvBtn').onclick=csv; $('favBtn').onclick=toggleFav; $('favExportBtn').onclick=favCsv; $('q').addEventListener('keydown',e=>{if(e.key==='Enter')search()}); ['apiMode','sortMode','typeFilter','rarityFilter'].forEach(id=>$(id).addEventListener('change',()=>{ if(state.cards.length){ filterLocal(); renderList(); if(state.filtered[0]) selectCard(state.filtered[0]) } }));
+renderFav(); renderYears(); setStatus('等待搜尋。');
+</script>
 </body>
 </html>
