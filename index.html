@@ -3,8 +3,8 @@
 <head>
   <meta charset="UTF-8" />
   <meta name="viewport" content="width=device-width, initial-scale=1.0" />
-  <title>pokemon-jp-card-number-search</title>
-  <meta name="description" content="Pokemon 日文卡號搜尋專用超精簡版，只顯示卡圖、卡號與推出年份。">
+  <title>pokemon-jp-card-number-scan</title>
+  <meta name="description" content="Pokemon 日文卡號搜尋重寫版，使用 TCGdex cards 列表掃描方式，只顯示卡圖、卡號與推出年份。">
   <style>
     :root {
       --bg: #f7f6f2;
@@ -34,7 +34,7 @@
     }
 
     .wrap {
-      width: min(760px, calc(100% - 24px));
+      width: min(900px, calc(100% - 24px));
       margin: 0 auto;
       padding: 24px 0 48px;
     }
@@ -62,7 +62,7 @@
       margin: 0 0 18px;
       color: var(--muted);
       line-height: 1.7;
-      max-width: 620px;
+      max-width: 700px;
     }
 
     .field {
@@ -149,8 +149,14 @@
       color: var(--muted);
       font-size: 14px;
       line-height: 1.6;
-      max-width: 620px;
+      max-width: 680px;
       word-break: break-word;
+    }
+
+    .cards {
+      display: grid;
+      grid-template-columns: repeat(auto-fill, minmax(220px, 1fr));
+      gap: 16px;
     }
 
     .card {
@@ -158,13 +164,14 @@
       border: 1px solid var(--border);
       border-radius: var(--radius);
       overflow: hidden;
-      display: grid;
-      gap: 0;
+      display: flex;
+      flex-direction: column;
+      min-height: 100%;
     }
 
     .thumb {
       background: linear-gradient(180deg, #eef6f6, #fff);
-      padding: 18px;
+      padding: 14px;
       aspect-ratio: 3 / 4;
       display: grid;
       place-items: center;
@@ -191,32 +198,32 @@
     }
 
     .meta {
-      padding: 18px;
+      padding: 14px;
       display: grid;
-      gap: 10px;
+      gap: 8px;
       text-align: center;
     }
 
     .meta h3 {
       margin: 0;
-      font-size: 20px;
-      line-height: 1.3;
+      font-size: 16px;
+      line-height: 1.35;
     }
 
     .pill {
       display: inline-block;
       margin: 0 auto;
-      padding: 6px 12px;
+      padding: 6px 10px;
       border-radius: 999px;
       background: #e8f1f3;
       font-size: 12px;
     }
 
-    .year,
-    .setline {
+    .line {
       color: var(--muted);
       font-size: 14px;
       line-height: 1.6;
+      word-break: break-word;
     }
 
     .empty {
@@ -229,38 +236,43 @@
       line-height: 1.7;
     }
 
-    .footnote {
-      margin-top: 14px;
-      color: var(--muted);
-      font-size: 13px;
-      line-height: 1.7;
+    @media (max-width: 520px) {
+      .wrap {
+        width: min(100% - 16px, 900px);
+      }
+
+      .cards {
+        grid-template-columns: repeat(2, minmax(0, 1fr));
+      }
     }
   </style>
 </head>
 <body>
   <div class="wrap">
     <section class="hero">
-      <h1>卡號搜尋專用</h1>
+      <h1>卡號搜尋重寫版</h1>
       <p class="sub">
-        只支援卡號查詢，並只顯示卡圖、卡號、系列與推出年份。適合你只想快速確認日文版卡相片。
+        不再直打單卡 API，改用日文 cards 列表掃描方式搜尋卡號。只顯示卡圖、卡號、系列與推出年份。
       </p>
 
       <form id="searchForm">
         <div class="field">
-          <label for="keyword">輸入完整 card ID 或 set ID + localId</label>
-          <input id="keyword" type="text" placeholder="例如 swsh3-136 或 s8a-P 004" autocomplete="off" />
+          <label for="keyword">輸入 card ID、localId 或卡號片段</label>
+          <input id="keyword" type="text" placeholder="例如 swsh3-136 / 004 / 004/030 / SV-P" autocomplete="off" />
         </div>
 
         <div class="actions">
           <button class="btn primary" type="submit">開始搜尋</button>
           <button class="btn" type="button" data-fill="swsh3-136">swsh3-136</button>
-          <button class="btn" type="button" data-fill="s8a-P 004">s8a-P 004</button>
+          <button class="btn" type="button" data-fill="004">004</button>
+          <button class="btn" type="button" data-fill="004/030">004/030</button>
+          <button class="btn" type="button" data-fill="SV-P">SV-P</button>
           <button class="btn" type="button" id="clearBtn">清空</button>
         </div>
       </form>
 
       <div class="tips">
-        支援兩種格式：完整 card ID，或 set ID + localId。像 004/030 這種裸卡號不建議直接查。
+        這版會掃描多頁日文 cards 列表，再比對 id、localId 和 set id。比前面的單卡路徑更穩。
       </div>
     </section>
 
@@ -271,11 +283,7 @@
       </div>
 
       <div id="resultsArea">
-        <div class="empty">請輸入卡號，例如 swsh3-136 或 s8a-P 004。</div>
-      </div>
-
-      <div class="footnote">
-        TCGdex 提供「單一卡片」與「set ID + localId 取卡」兩種查詢路徑，所以這版直接用單卡查詢，不再依賴名稱搜尋。[page:2][page:1]
+        <div class="empty">請輸入卡號，例如 swsh3-136、004 或 004/030。</div>
       </div>
     </section>
   </div>
@@ -287,6 +295,11 @@
     const statusEl = document.getElementById('status');
     const resultsArea = document.getElementById('resultsArea');
 
+    const PAGE_SIZE = 80;
+    const MAX_PAGES = 10;
+
+    let currentCards = [];
+
     function escapeHtml(str = '') {
       return String(str).replace(/[&<>'"]/g, char => ({
         '&': '&amp;',
@@ -295,6 +308,10 @@
         '"': '&quot;',
         "'": '&#39;'
       }[char]));
+    }
+
+    function normalizeText(value) {
+      return String(value || '').trim().toLowerCase().replace(/\s+/g, '');
     }
 
     function getCardName(card) {
@@ -330,25 +347,49 @@
       return /^\d{4}-\d{2}-\d{2}$/.test(date) ? date.slice(0, 4) : '未標示';
     }
 
-    function parseInput(raw) {
-      const text = String(raw || '').trim();
-
-      if (!text) return null;
-
-      if (/^[a-z0-9-]+$/i.test(text) && /\d/.test(text)) {
-        return { type: 'card-id', cardId: text };
+    function dedupeCards(cards) {
+      const map = new Map();
+      for (const card of cards) {
+        const key = card.id || `${card.set?.id || ''}-${card.localId || getCardName(card)}`;
+        if (!map.has(key)) map.set(key, card);
       }
+      return [...map.values()];
+    }
 
-      const match = text.match(/^([A-Za-z0-9-]+)\s+(.+)$/);
-      if (match) {
-        return {
-          type: 'set-local',
-          setId: match[1],
-          localId: match[2].trim()
-        };
-      }
+    function parseCardNumber(value) {
+      const str = String(value || '');
+      const m = str.match(/\d+/);
+      return m ? Number(m[0]) : Number.MAX_SAFE_INTEGER;
+    }
 
-      return null;
+    function sortCards(cards) {
+      const copied = [...cards];
+      copied.sort((a, b) => {
+        const aDate = new Date(a.set?.releaseDate || a.releaseDate || '1900-01-01').getTime();
+        const bDate = new Date(b.set?.releaseDate || b.releaseDate || '1900-01-01').getTime();
+        if (bDate !== aDate) return bDate - aDate;
+        return parseCardNumber(a.localId || a.id) - parseCardNumber(b.localId || b.id);
+      });
+      return copied;
+    }
+
+    function cardMatches(card, query) {
+      const q = normalizeText(query);
+      const id = normalizeText(card.id || '');
+      const localId = normalizeText(card.localId || '');
+      const setId = normalizeText(card.set?.id || '');
+      const combo1 = normalizeText(`${setId}${localId}`);
+      const combo2 = normalizeText(`${setId}-${localId}`);
+      const combo3 = normalizeText(`${setId} ${localId}`);
+
+      return (
+        id.includes(q) ||
+        localId.includes(q) ||
+        setId.includes(q) ||
+        combo1.includes(q) ||
+        combo2.includes(q) ||
+        combo3.includes(q)
+      );
     }
 
     async function safeJsonFetch(url) {
@@ -357,76 +398,100 @@
       });
 
       if (!response.ok) {
-        if (response.status === 404) {
-          throw new Error('找不到這張卡');
-        }
         throw new Error(`API 請求失敗：${response.status}`);
       }
 
       return await response.json();
     }
 
-    async function fetchByCardId(cardId) {
-      const url = `https://api.tcgdex.net/v2/ja/cards/${encodeURIComponent(cardId)}`;
-      return await safeJsonFetch(url);
+    async function fetchCardsPage(page) {
+      const url = new URL('https://api.tcgdex.net/v2/ja/cards');
+      url.searchParams.set('sort:field', 'releaseDate');
+      url.searchParams.set('sort:order', 'DESC');
+      url.searchParams.set('pagination:itemsPerPage', String(PAGE_SIZE));
+      url.searchParams.set('pagination:page', String(page));
+
+      const data = await safeJsonFetch(url.toString());
+      if (Array.isArray(data)) return data;
+      if (Array.isArray(data.cards)) return data.cards;
+      if (Array.isArray(data.data)) return data.data;
+      return [];
     }
 
-    async function fetchBySetLocal(setId, localId) {
-      const url = `https://api.tcgdex.net/v2/ja/sets/${encodeURIComponent(setId)}/${encodeURIComponent(localId)}`;
-      return await safeJsonFetch(url);
+    async function searchByCardNumber(query) {
+      let found = [];
+
+      for (let page = 1; page <= MAX_PAGES; page += 1) {
+        statusEl.textContent = `正在掃描卡片列表（第 ${page}/${MAX_PAGES} 頁）`;
+        const cards = await fetchCardsPage(page);
+        if (!cards.length) break;
+
+        found = found.concat(cards.filter(card => cardMatches(card, query)));
+
+        if (cards.length < PAGE_SIZE) break;
+      }
+
+      return sortCards(dedupeCards(found));
     }
 
-    function renderCard(card, inputText) {
-      if (!card || typeof card !== 'object') {
-        resultsArea.innerHTML = '<div class="empty">找不到卡片資料。</div>';
+    function renderCards(cards) {
+      currentCards = cards;
+
+      if (!cards.length) {
+        resultsArea.innerHTML = '<div class="empty">找不到符合的卡號。請試完整 card ID、localId 或其他片段。</div>';
         return;
       }
 
-      const name = getCardName(card) || '未命名卡片';
-      const images = getCardImageCandidates(card);
-      const firstImage = images[0] || '';
-      const remainingImages = escapeHtml(JSON.stringify(images.slice(1)));
-      const year = getReleaseYear(card);
-      const numberText = card.localId || card.id || '未標示';
-      const setName = card.set?.name || card.set?.id || '未標示';
+      const html = cards.map(card => {
+        const name = getCardName(card) || '未命名卡片';
+        const images = getCardImageCandidates(card);
+        const firstImage = images[0] || '';
+        const remainingImages = escapeHtml(JSON.stringify(images.slice(1)));
+        const year = getReleaseYear(card);
+        const cardNo = card.localId || '未標示';
+        const setName = card.set?.name || card.set?.id || '未標示';
+        const cardId = card.id || '未標示';
 
-      resultsArea.innerHTML = `
-        <article class="card">
-          <div class="thumb">
-            ${firstImage ? `
-              <img
-                src="${escapeHtml(firstImage)}"
-                data-fallbacks='${remainingImages}'
-                alt="${escapeHtml(name)} 卡圖"
-                loading="lazy"
-                width="320"
-                height="448"
-                onerror="
-                  const fallbacks = JSON.parse(this.dataset.fallbacks || '[]');
-                  if (fallbacks.length) {
-                    this.src = fallbacks.shift();
-                    this.dataset.fallbacks = JSON.stringify(fallbacks);
-                  } else {
-                    this.style.display='none';
-                    this.nextElementSibling.style.display='grid';
-                  }
-                "
-              >
-              <div class="fallback" style="display:none;">沒有可用圖片</div>
-            ` : `
-              <div class="fallback">沒有圖片資料</div>
-            `}
-          </div>
+        return `
+          <article class="card">
+            <div class="thumb">
+              ${firstImage ? `
+                <img
+                  src="${escapeHtml(firstImage)}"
+                  data-fallbacks='${remainingImages}'
+                  alt="${escapeHtml(name)} 卡圖"
+                  loading="lazy"
+                  width="245"
+                  height="342"
+                  onerror="
+                    const fallbacks = JSON.parse(this.dataset.fallbacks || '[]');
+                    if (fallbacks.length) {
+                      this.src = fallbacks.shift();
+                      this.dataset.fallbacks = JSON.stringify(fallbacks);
+                    } else {
+                      this.style.display='none';
+                      this.nextElementSibling.style.display='grid';
+                    }
+                  "
+                >
+                <div class="fallback" style="display:none;">沒有可用圖片</div>
+              ` : `
+                <div class="fallback">沒有圖片資料</div>
+              `}
+            </div>
 
-          <div class="meta">
-            <h3>${escapeHtml(name)}</h3>
-            <div class="pill">${escapeHtml(numberText)}</div>
-            <div class="setline">系列：${escapeHtml(setName)}</div>
-            <div class="pill">${escapeHtml(year)} 年</div>
-            <div class="year">輸入：${escapeHtml(inputText)}</div>
-          </div>
-        </article>
-      `;
+            <div class="meta">
+              <h3>${escapeHtml(name)}</h3>
+              <div class="pill">${escapeHtml(cardNo)}</div>
+              <div class="line">系列：${escapeHtml(setName)}</div>
+              <div class="line">ID：${escapeHtml(cardId)}</div>
+              <div class="pill">${escapeHtml(year)} 年</div>
+            </div>
+          </article>
+        `;
+      }).join('');
+
+      resultsArea.innerHTML = `<div class="cards">${html}</div>`;
     }
 
     async function runSearch() {
@@ -434,38 +499,21 @@
 
       if (!rawInput) {
         statusEl.textContent = '請先輸入卡號。';
-        resultsArea.innerHTML = '<div class="empty">請輸入卡號，例如 swsh3-136 或 s8a-P 004。</div>';
+        resultsArea.innerHTML = '<div class="empty">請輸入卡號，例如 swsh3-136、004 或 004/030。</div>';
         return;
       }
 
-      const parsed = parseInput(rawInput);
-
-      if (!parsed) {
-        statusEl.textContent = '格式不正確';
-        resultsArea.innerHTML = '<div class="empty">請輸入完整 card ID，或 set ID + localId，例如 s8a-P 004。</div>';
-        return;
-      }
-
-      resultsArea.innerHTML = '<div class="empty">正在查詢卡片資料...</div>';
+      resultsArea.innerHTML = '<div class="empty">正在搜尋卡片資料...</div>';
 
       try {
-        let card;
-
-        if (parsed.type === 'card-id') {
-          statusEl.textContent = `正在以完整 card ID 查詢：${parsed.cardId}`;
-          card = await fetchByCardId(parsed.cardId);
-        } else {
-          statusEl.textContent = `正在以 set + localId 查詢：${parsed.setId} ${parsed.localId}`;
-          card = await fetchBySetLocal(parsed.setId, parsed.localId);
-        }
-
-        renderCard(card, rawInput);
-        statusEl.textContent = `已找到卡片：${getCardName(card) || rawInput}`;
+        const cards = await searchByCardNumber(rawInput);
+        renderCards(cards);
+        statusEl.textContent = `搜尋：${rawInput}，找到 ${cards.length} 張卡片。`;
       } catch (error) {
         statusEl.textContent = '搜尋失敗';
         resultsArea.innerHTML = `
           <div class="empty">
-            找不到卡片或無法取得資料。<br>
+            無法取得資料。<br>
             錯誤訊息：${escapeHtml(error.message || '未知錯誤')}
           </div>
         `;
@@ -485,8 +533,9 @@
 
     clearBtn.addEventListener('click', () => {
       keywordInput.value = '';
+      currentCards = [];
       statusEl.textContent = '已清空。';
-      resultsArea.innerHTML = '<div class="empty">請輸入卡號，例如 swsh3-136 或 s8a-P 004。</div>';
+      resultsArea.innerHTML = '<div class="empty">請輸入卡號，例如 swsh3-136、004 或 004/030。</div>';
     });
   </script>
 </body>
