@@ -3,8 +3,8 @@
 <head>
   <meta charset="UTF-8" />
   <meta name="viewport" content="width=device-width, initial-scale=1.0" />
-  <title>Pokemon 卡牌查詢（日文輸入支援）</title>
-  <meta name="description" content="支援日文或英文 Pokemon 名稱輸入，自動轉英文查詢 Pokemon TCG 卡牌，並提供價格參考連結與 HKD 換算工具。">
+  <title>Pokemon 日文卡牌查詢（英文名搜尋）</title>
+  <meta name="description" content="輸入英文 Pokemon 名稱，搜尋日文版 Pokemon 卡牌，並提供 SNKRDUNK / eBay 價格參考連結與 HKD 換算工具。">
   <style>
     :root {
       --bg: #f6f3ee;
@@ -100,11 +100,6 @@
       background: var(--primary);
       border-color: var(--primary);
       color: #fff;
-    }
-
-    .main-btn:disabled {
-      opacity: 0.6;
-      cursor: not-allowed;
     }
 
     .grid {
@@ -408,37 +403,37 @@
 <body>
   <div class="wrap">
     <section class="hero">
-      <h1>Pokemon 卡牌查詢（日文輸入支援）</h1>
-      <p class="sub">可輸入日文或英文 Pokémon 名稱。系統會先把日文名稱轉成英文官方名，再用 Pokémon TCG API 查卡牌。打開卡面後，也可查看 eBay / SNKRDUNK 搜尋連結與 HKD 價格換算工具。</p>
+      <h1>Pokemon 日文卡牌查詢（英文名搜尋）</h1>
+      <p class="sub">輸入英文 Pokémon 名稱，例如 Pikachu、Charizard、Eevee。系統會先對應成日文名，再搜尋日文版卡片，並提供 SNKRDUNK / eBay 搜尋連結與 HKD 換算工具。</p>
 
       <form id="searchForm">
         <div class="grid">
           <div class="field">
-            <label for="keyword">輸入 Pokemon 名稱</label>
-            <input id="keyword" type="text" placeholder="例如 ピカチュウ / リザードン / Pikachu / Eevee" />
+            <label for="keyword">輸入英文 Pokemon 名稱</label>
+            <input id="keyword" type="text" placeholder="例如 Pikachu / Charizard / Eevee" />
           </div>
 
           <div class="field">
-            <label for="sortBy">排列方式</label>
-            <select id="sortBy">
+            <label for="sortMode">排列方式</label>
+            <select id="sortMode">
               <option value="number">卡號（小至大）</option>
-              <option value="-set.releaseDate,number">最新系列</option>
-              <option value="set.releaseDate,number">最舊系列</option>
-              <option value="supertype,number">卡片種類</option>
+              <option value="latest">最新系列</option>
+              <option value="oldest">最舊系列</option>
+              <option value="type">卡片種類</option>
             </select>
           </div>
         </div>
 
         <div class="actions">
           <button class="main-btn primary" type="submit">開始搜尋</button>
-          <button class="main-btn" type="button" id="fillDemoJa">填入日文示例</button>
-          <button class="main-btn" type="button" id="fillDemoEn">填入英文示例</button>
+          <button class="main-btn" type="button" id="fillDemo1">Pikachu</button>
+          <button class="main-btn" type="button" id="fillDemo2">Charizard</button>
           <button class="main-btn" type="button" id="clearBtn">清空</button>
         </div>
       </form>
 
       <div class="tips">
-        支援示例：ピカチュウ、リザードン、イーブイ、フシギダネ、Pikachu、Charizard。
+        這版設計目標是：用英文名找日文卡，並讓 SNKRDUNK 搜尋更接近「日文名稱 + 卡號」的查法。
       </div>
     </section>
 
@@ -449,11 +444,11 @@
       </div>
 
       <div id="resultsArea">
-        <div class="empty">請輸入日文或英文 Pokémon 名稱。</div>
+        <div class="empty">請輸入英文 Pokémon 名稱，例如 Pikachu。</div>
       </div>
 
       <div class="footnote">
-        這個版本使用 Pokémon TCG API 讀取卡圖與卡片欄位，並將 SNKRDUNK 搜尋改為「名稱 + 卡號」的較短關鍵字方式。[web:24][web:336]
+        TCGdex REST 文件說明多數列表端點支援 filtering、sorting、pagination；本頁用英文名先轉成日文 Pokémon 名稱，再查日文卡片資料。[page:1][page:2]
       </div>
     </section>
   </div>
@@ -466,8 +461,8 @@
         <h3 id="modalTitle">卡片名稱</h3>
         <div class="line" id="modalSet"></div>
         <div class="line" id="modalNumber"></div>
-        <div class="line" id="modalRarity"></div>
-        <div class="line" id="modalArtist"></div>
+        <div class="line" id="modalCategory"></div>
+        <div class="line" id="modalIllustrator"></div>
         <div class="line" id="modalResolvedName"></div>
 
         <div class="price-panel">
@@ -517,7 +512,7 @@
           </div>
 
           <div class="price-note">
-            這裡是純前端參考工具，不是即時成交 API。eBay 與 SNKRDUNK 會打開搜尋頁，HKD 則依你輸入的價格與匯率做估算；實際成交仍可能受手續費、運費與市場波動影響。[web:327][web:329]
+            這裡是純前端參考工具，不是即時成交 API。SNKRDUNK 與 eBay 連結會打開搜尋頁，HKD 只依你輸入的價格與匯率做估算。[web:329][web:327]
           </div>
         </div>
       </div>
@@ -526,13 +521,13 @@
 
   <script>
     const keywordInput = document.getElementById('keyword');
-    const sortBySelect = document.getElementById('sortBy');
+    const sortMode = document.getElementById('sortMode');
     const searchForm = document.getElementById('searchForm');
     const statusEl = document.getElementById('status');
     const resultsArea = document.getElementById('resultsArea');
-    const fillDemoJa = document.getElementById('fillDemoJa');
-    const fillDemoEn = document.getElementById('fillDemoEn');
     const clearBtn = document.getElementById('clearBtn');
+    const fillDemo1 = document.getElementById('fillDemo1');
+    const fillDemo2 = document.getElementById('fillDemo2');
 
     const modal = document.getElementById('modal');
     const modalClose = document.getElementById('modalClose');
@@ -540,8 +535,8 @@
     const modalTitle = document.getElementById('modalTitle');
     const modalSet = document.getElementById('modalSet');
     const modalNumber = document.getElementById('modalNumber');
-    const modalRarity = document.getElementById('modalRarity');
-    const modalArtist = document.getElementById('modalArtist');
+    const modalCategory = document.getElementById('modalCategory');
+    const modalIllustrator = document.getElementById('modalIllustrator');
     const modalResolvedName = document.getElementById('modalResolvedName');
 
     const ebayLink = document.getElementById('ebayLink');
@@ -555,12 +550,11 @@
     const jpyHkdResult = document.getElementById('jpyHkdResult');
 
     let currentCards = [];
-    let lastResolvedName = '';
-    let lastQueryName = '';
-    let lastOrderBy = 'number';
-    let currentPage = 1;
-    let hasMore = false;
-    const PAGE_SIZE = 250;
+    let currentJapaneseName = '';
+    let currentEnglishName = '';
+    const PAGE_SIZE = 60;
+    let currentOffset = 0;
+    let lastBaseCards = [];
 
     function escapeHtml(str = '') {
       return String(str).replace(/[&<>'"]/g, char => ({
@@ -576,25 +570,75 @@
       return String(value || '').trim().toLowerCase();
     }
 
-    function isJapaneseText(text) {
-      return /[\u3040-\u30ff\u3400-\u4dbf\u4e00-\u9fff]/.test(text);
+    function getCardName(card) {
+      if (typeof card.name === 'string') return card.name;
+      if (card.name && typeof card.name === 'object') {
+        return card.name.ja || card.name.en || Object.values(card.name)[0] || '';
+      }
+      return '';
+    }
+
+    function getCardImage(card) {
+      if (typeof card.image === 'string') return card.image;
+      if (card.image && typeof card.image === 'object') {
+        return card.image.high || card.image.low || Object.values(card.image)[0] || '';
+      }
+      return '';
+    }
+
+    function getCategory(card) {
+      return card.category || card.supertype || '未標示';
+    }
+
+    function parseCardNumber(numberValue) {
+      const value = String(numberValue || '');
+      const matched = value.match(/\d+/);
+      return matched ? Number(matched[0]) : Number.MAX_SAFE_INTEGER;
+    }
+
+    function sortCards(cards, mode) {
+      const copied = [...cards];
+
+      if (mode === 'latest') {
+        copied.sort((a, b) => {
+          const aDate = new Date(a.set?.releaseDate || '1900-01-01').getTime();
+          const bDate = new Date(b.set?.releaseDate || '1900-01-01').getTime();
+          if (bDate !== aDate) return bDate - aDate;
+          return parseCardNumber(a.localId || a.id) - parseCardNumber(b.localId || b.id);
+        });
+        return copied;
+      }
+
+      if (mode === 'oldest') {
+        copied.sort((a, b) => {
+          const aDate = new Date(a.set?.releaseDate || '2999-12-31').getTime();
+          const bDate = new Date(b.set?.releaseDate || '2999-12-31').getTime();
+          if (aDate !== bDate) return aDate - bDate;
+          return parseCardNumber(a.localId || a.id) - parseCardNumber(b.localId || b.id);
+        });
+        return copied;
+      }
+
+      if (mode === 'type') {
+        copied.sort((a, b) => {
+          const aType = getCategory(a);
+          const bType = getCategory(b);
+          if (aType !== bType) return aType.localeCompare(bType, 'ja');
+          return parseCardNumber(a.localId || a.id) - parseCardNumber(b.localId || b.id);
+        });
+        return copied;
+      }
+
+      copied.sort((a, b) => parseCardNumber(a.localId || a.id) - parseCardNumber(b.localId || b.id));
+      return copied;
     }
 
     function updatePriceLinks(card) {
-      const ebayParts = [
-        card.name || '',
-        card.number || '',
-        card.set?.name || '',
-        'pokemon card'
-      ].filter(Boolean);
-
-      const snkrdunkParts = [
-        card.name || '',
-        card.number || ''
-      ].filter(Boolean);
-
-      const ebayQuery = encodeURIComponent(ebayParts.join(' '));
-      const snkrdunkQuery = encodeURIComponent(snkrdunkParts.join(' '));
+      const jpName = getCardName(card);
+      const cardNo = card.localId || card.id || '';
+      const setName = card.set?.name || '';
+      const ebayQuery = encodeURIComponent([currentEnglishName, cardNo, setName, 'pokemon card'].filter(Boolean).join(' '));
+      const snkrdunkQuery = encodeURIComponent([jpName, cardNo].filter(Boolean).join(' '));
 
       ebayLink.href = `https://www.ebay.com/sch/i.html?_nkw=${ebayQuery}`;
       snkrdunkLink.href = `https://snkrdunk.com/en/search/result?keyword=${snkrdunkQuery}`;
@@ -606,103 +650,68 @@
       const usdRate = Number(usdToHkdRate.value || 0);
       const jpyRate = Number(jpyToHkdRate.value || 0);
 
-      if (usd > 0 && usdRate > 0) {
-        const hkd = usd * usdRate;
-        usdHkdResult.textContent = `約 HK$ ${hkd.toFixed(2)}（USD ${usd} × ${usdRate}）`;
-      } else {
-        usdHkdResult.textContent = '尚未計算';
-      }
+      usdHkdResult.textContent = (usd > 0 && usdRate > 0)
+        ? `約 HK$ ${(usd * usdRate).toFixed(2)}（USD ${usd} × ${usdRate}）`
+        : '尚未計算';
 
-      if (jpy > 0 && jpyRate > 0) {
-        const hkd = jpy * jpyRate;
-        jpyHkdResult.textContent = `約 HK$ ${hkd.toFixed(2)}（JPY ${jpy} × ${jpyRate}）`;
-      } else {
-        jpyHkdResult.textContent = '尚未計算';
-      }
+      jpyHkdResult.textContent = (jpy > 0 && jpyRate > 0)
+        ? `約 HK$ ${(jpy * jpyRate).toFixed(2)}（JPY ${jpy} × ${jpyRate}）`
+        : '尚未計算';
     }
 
-    async function resolvePokemonName(input) {
-      const raw = String(input || '').trim();
-      if (!raw) throw new Error('請輸入 Pokemon 名稱。');
+    async function resolveEnglishToJapaneseName(englishName) {
+      const url = `https://pokeapi.co/api/v2/pokemon-species/${encodeURIComponent(normalizeText(englishName))}`;
+      const response = await fetch(url);
 
-      if (!isJapaneseText(raw)) {
-        return {
-          originalInput: raw,
-          resolvedEnglishName: raw,
-          method: 'direct'
-        };
+      if (!response.ok) {
+        throw new Error(`找不到英文 Pokémon 名稱：${englishName}`);
       }
 
-      const speciesListResponse = await fetch('https://pokeapi.co/api/v2/pokemon-species?limit=2000');
-      if (!speciesListResponse.ok) {
-        throw new Error(`PokéAPI 請求失敗：${speciesListResponse.status}`);
+      const data = await response.json();
+      const names = data.names || [];
+      const ja = names.find(item => item.language && (item.language.name === 'ja' || item.language.name === 'ja-Hrkt'));
+
+      if (!ja || !ja.name) {
+        throw new Error(`找不到 ${englishName} 的日文名稱`);
       }
 
-      const speciesList = await speciesListResponse.json();
-      const allSpecies = speciesList.results || [];
-
-      for (const species of allSpecies) {
-        const detailResponse = await fetch(species.url);
-        if (!detailResponse.ok) continue;
-
-        const detail = await detailResponse.json();
-        const names = detail.names || [];
-        const matched = names.find(item =>
-          item.language &&
-          (item.language.name === 'ja' || item.language.name === 'ja-Hrkt') &&
-          normalizeText(item.name) === normalizeText(raw)
-        );
-
-        if (matched) {
-          return {
-            originalInput: raw,
-            resolvedEnglishName: detail.name,
-            method: 'japanese-mapped'
-          };
-        }
-      }
-
-      return {
-        originalInput: raw,
-        resolvedEnglishName: raw,
-        method: 'fallback-direct'
-      };
+      return ja.name;
     }
 
-    async function searchCardsByEnglishName(englishName, orderBy, page = 1) {
-      const url = new URL('https://api.pokemontcg.io/v2/cards');
-      url.searchParams.set('q', `name:${englishName}`);
-      url.searchParams.set('orderBy', orderBy || 'number');
-      url.searchParams.set('pageSize', String(PAGE_SIZE));
-      url.searchParams.set('page', String(page));
+    async function fetchJapaneseCards(japaneseName, offset = 0) {
+      const url = new URL('https://api.tcgdex.net/v2/ja/cards');
+      url.searchParams.set('name', japaneseName);
+      url.searchParams.set('pagination:itemsPerPage', String(PAGE_SIZE));
+      url.searchParams.set('pagination:offset', String(offset));
 
       const response = await fetch(url.toString(), {
         headers: { 'Accept': 'application/json' }
       });
 
       if (!response.ok) {
-        throw new Error(`Pokémon TCG API 請求失敗：${response.status}`);
+        throw new Error(`TCGdex 請求失敗：${response.status}`);
       }
 
-      const payload = await response.json();
-      return payload.data || [];
+      return await response.json();
     }
 
     function openModal(card) {
-      modalTitle.textContent = card.name || '未命名卡片';
-      modalSet.textContent = `系列：${card.set?.name || '未知系列'} (${card.set?.id || 'N/A'})`;
-      modalNumber.textContent = `卡號：${card.number || '-'}${card.hp ? `，HP：${card.hp}` : ''}`;
-      modalRarity.textContent = `稀有度：${card.rarity || '未標示'}`;
-      modalArtist.textContent = `插畫師：${card.artist || '未標示'}`;
-      modalResolvedName.textContent = `查詢轉換名稱：${lastResolvedName || '未記錄'}`;
+      const name = getCardName(card);
+      const image = getCardImage(card);
 
-      const image = card.images?.large || card.images?.small || '';
+      modalTitle.textContent = name || '未命名卡片';
+      modalSet.textContent = `系列：${card.set?.name || card.set?.id || '未標示'}`;
+      modalNumber.textContent = `卡號：${card.localId || card.id || '-'}`;
+      modalCategory.textContent = `分類：${getCategory(card)}`;
+      modalIllustrator.textContent = `插畫師：${card.illustrator || '未標示'}`;
+      modalResolvedName.textContent = `英文名稱：${currentEnglishName || '-'} → 日文名稱：${currentJapaneseName || '-'}`;
+
       if (image) {
         modalImg.src = image;
       } else {
         modalImg.removeAttribute('src');
       }
-      modalImg.alt = `${card.name || 'Pokemon'} 卡牌大圖`;
+      modalImg.alt = `${name || 'Pokemon'} 卡牌大圖`;
 
       updatePriceLinks(card);
       usdPrice.value = '';
@@ -720,37 +729,28 @@
       modalImg.removeAttribute('src');
     }
 
-    function getSortLabel(orderBy) {
-      if (orderBy === '-set.releaseDate,number') return '最新系列';
-      if (orderBy === 'set.releaseDate,number') return '最舊系列';
-      if (orderBy === 'supertype,number') return '卡片種類';
-      return '卡號（小至大）';
-    }
+    function renderCards(cards) {
+      currentCards = cards;
 
-    function renderCards(cards, append = false) {
-      if (!append) {
-        currentCards = cards;
-      } else {
-        currentCards = currentCards.concat(cards);
-      }
-
-      if (!currentCards.length) {
-        resultsArea.innerHTML = '<div class="empty">找不到結果。請試另一個日文名或英文名。</div>';
+      if (!cards.length) {
+        resultsArea.innerHTML = '<div class="empty">找不到日文卡片結果。請試另一個英文名稱。</div>';
         return;
       }
 
-      const cardsHtml = currentCards.map((card, index) => {
-        const smallImage = card.images?.small || '';
-        const rarity = card.rarity || '未標示';
-        const hp = card.hp ? `HP ${card.hp}` : '';
+      const cardsHtml = cards.map((card, index) => {
+        const image = getCardImage(card);
+        const name = getCardName(card);
+        const number = card.localId || card.id || '-';
+        const setName = card.set?.name || card.set?.id || '未標示';
+        const category = getCategory(card);
 
         return `
           <article class="card">
-            <button class="card-thumb" type="button" data-index="${index}" aria-label="開啟 ${escapeHtml(card.name)} 大圖">
-              ${smallImage ? `
+            <button class="card-thumb" type="button" data-index="${index}" aria-label="開啟 ${escapeHtml(name)} 大圖">
+              ${image ? `
                 <img
-                  src="${escapeHtml(smallImage)}"
-                  alt="${escapeHtml(card.name)} 卡圖"
+                  src="${escapeHtml(image)}"
+                  alt="${escapeHtml(name)} 卡圖"
                   loading="lazy"
                   width="245"
                   height="342"
@@ -762,20 +762,18 @@
               `}
             </button>
             <div class="meta">
-              <h3>${escapeHtml(card.name || '未命名卡片')}</h3>
+              <h3>${escapeHtml(name || '未命名卡片')}</h3>
               <div class="badges">
-                <span class="badge">#${escapeHtml(card.number || '-')}</span>
-                <span class="badge">${escapeHtml(rarity)}</span>
-                ${hp ? `<span class="badge">${escapeHtml(hp)}</span>` : ''}
+                <span class="badge">${escapeHtml(number)}</span>
+                <span class="badge">${escapeHtml(category)}</span>
               </div>
-              <div class="small">${escapeHtml(card.set?.name || '未知系列')}</div>
-              <div class="small">種類：${escapeHtml(card.supertype || '未標示')}</div>
+              <div class="small">${escapeHtml(setName)}</div>
             </div>
           </article>
         `;
       }).join('');
 
-      const moreHtml = hasMore ? `
+      const moreHtml = lastBaseCards.length === PAGE_SIZE ? `
         <div class="more-wrap">
           <button class="main-btn" id="loadMoreBtn" type="button">載入更多</button>
         </div>
@@ -799,77 +797,77 @@
       }
     }
 
-    async function loadMoreCards() {
-      try {
-        const nextPage = currentPage + 1;
-        statusEl.textContent = `正在載入更多... 目前已顯示 ${currentCards.length} 張`;
-        const moreCards = await searchCardsByEnglishName(lastQueryName, lastOrderBy, nextPage);
-
-        currentPage = nextPage;
-        hasMore = moreCards.length === PAGE_SIZE;
-
-        renderCards(moreCards, true);
-        statusEl.textContent = `輸入：${keywordInput.value.trim()} → 查詢名稱：${lastResolvedName}，排序：${getSortLabel(lastOrderBy)}，目前顯示 ${currentCards.length} 張卡片。`;
-      } catch (error) {
-        statusEl.textContent = `載入更多失敗：${error.message || '未知錯誤'}`;
-      }
-    }
-
-    fillDemoJa.addEventListener('click', () => {
-      keywordInput.value = 'ピカチュウ';
-    });
-
-    fillDemoEn.addEventListener('click', () => {
-      keywordInput.value = 'Pikachu';
-    });
-
-    clearBtn.addEventListener('click', () => {
-      keywordInput.value = '';
-      sortBySelect.value = 'number';
-      statusEl.textContent = '已清空。';
-      resultsArea.innerHTML = '<div class="empty">請輸入日文或英文 Pokémon 名稱。</div>';
-      lastResolvedName = '';
-      lastQueryName = '';
-      lastOrderBy = 'number';
-      currentPage = 1;
-      hasMore = false;
-      currentCards = [];
-    });
-
-    calcPriceBtn.addEventListener('click', calculateHkd);
-
-    searchForm.addEventListener('submit', async (event) => {
-      event.preventDefault();
-
-      const keyword = keywordInput.value.trim();
-      const orderBy = sortBySelect.value || 'number';
-
-      if (!keyword) {
-        statusEl.textContent = '請先輸入名稱。';
+    async function runSearch(reset = true) {
+      const englishName = keywordInput.value.trim();
+      if (!englishName) {
+        statusEl.textContent = '請先輸入英文名稱。';
         return;
       }
 
       try {
-        statusEl.textContent = '正在辨識名稱...';
-        resultsArea.innerHTML = '<div class="empty">正在查詢資料...</div>';
+        if (reset) {
+          currentOffset = 0;
+          resultsArea.innerHTML = '<div class="empty">正在查詢日文卡片資料...</div>';
+          statusEl.textContent = '正在將英文名稱轉成日文...';
+        }
 
-        const resolved = await resolvePokemonName(keyword);
-        lastResolvedName = resolved.resolvedEnglishName;
-        lastQueryName = resolved.resolvedEnglishName;
-        lastOrderBy = orderBy;
-        currentPage = 1;
+        currentEnglishName = englishName;
+        currentJapaneseName = await resolveEnglishToJapaneseName(englishName);
 
-        statusEl.textContent = `已辨識為：${resolved.resolvedEnglishName}，正在查詢卡片...`;
+        statusEl.textContent = `已轉換為日文：${currentJapaneseName}，正在查詢日文卡片...`;
 
-        const cards = await searchCardsByEnglishName(resolved.resolvedEnglishName, orderBy, 1);
-        hasMore = cards.length === PAGE_SIZE;
+        const fetched = await fetchJapaneseCards(currentJapaneseName, currentOffset);
+        const fetchedCards = Array.isArray(fetched) ? fetched : (fetched.cards || fetched.data || []);
+        lastBaseCards = fetchedCards;
 
-        statusEl.textContent = `輸入：${resolved.originalInput} → 查詢名稱：${resolved.resolvedEnglishName}，排序：${getSortLabel(orderBy)}，目前顯示 ${cards.length} 張卡片。`;
-        renderCards(cards, false);
+        let merged = reset ? fetchedCards : currentCards.concat(fetchedCards);
+        merged = sortCards(merged, sortMode.value);
+
+        renderCards(merged);
+
+        statusEl.textContent = `英文：${currentEnglishName} → 日文：${currentJapaneseName}，目前顯示 ${merged.length} 張日文卡片。`;
       } catch (error) {
         statusEl.textContent = '搜尋失敗';
         resultsArea.innerHTML = `<div class="empty">${escapeHtml(error.message || '發生未知錯誤。')}</div>`;
       }
+    }
+
+    async function loadMoreCards() {
+      currentOffset += PAGE_SIZE;
+      await runSearch(false);
+    }
+
+    fillDemo1.addEventListener('click', () => {
+      keywordInput.value = 'Pikachu';
+    });
+
+    fillDemo2.addEventListener('click', () => {
+      keywordInput.value = 'Charizard';
+    });
+
+    clearBtn.addEventListener('click', () => {
+      keywordInput.value = '';
+      sortMode.value = 'number';
+      statusEl.textContent = '已清空。';
+      resultsArea.innerHTML = '<div class="empty">請輸入英文 Pokémon 名稱，例如 Pikachu。</div>';
+      currentCards = [];
+      currentJapaneseName = '';
+      currentEnglishName = '';
+      currentOffset = 0;
+      lastBaseCards = [];
+    });
+
+    calcPriceBtn.addEventListener('click', calculateHkd);
+
+    sortMode.addEventListener('change', () => {
+      if (!currentCards.length) return;
+      renderCards(sortCards(currentCards, sortMode.value));
+      statusEl.textContent = `英文：${currentEnglishName} → 日文：${currentJapaneseName}，目前顯示 ${currentCards.length} 張日文卡片。`;
+    });
+
+    searchForm.addEventListener('submit', async (event) => {
+      event.preventDefault();
+      await runSearch(true);
     });
 
     modalClose.addEventListener('click', closeModal);
