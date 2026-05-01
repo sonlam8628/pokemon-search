@@ -120,25 +120,30 @@ const demo = [
 
 function esc(v){return String(v ?? '').replace(/[&<>\"']/g,m=>({'&':'&amp;','<':'&lt;','>':'&gt;','\"':'&quot;',"'":'&#39;'}[m]))}
 function y(c){return c.set?.releaseDate ? new Date(c.set.releaseDate).getFullYear() : ''}
+
 function img(c){
-  const u = (c.image?.large || c.image?.small || c.image || c.images?.large || c.images?.small || '').trim();
-  if(!u) return 'https://via.placeholder.com/600x420?text=No+Image';
-  if(u.startsWith('http')) return u;
-  return u.replace(/\/$/,'') + '/high.png';
+  const raw = (c.image?.large || c.image?.small || c.image || c.images?.large || c.images?.small || '').trim();
+  if (!raw) return 'https://via.placeholder.com/600x420?text=No+Image';
+  if (raw.startsWith('http')) return raw;
+  return raw.replace(/\/$/, '') + '/high.png';
 }
 
 function setStatus(t){ $('status').textContent = t }
+
 function saveFav(){ localStorage.setItem('pokemonFavorites', JSON.stringify(state.favorites)); renderFav() }
+
 function toggleFav(){
   if(!state.selected) return;
   const i = state.favorites.findIndex(x=>x.id===state.selected.id);
   i>=0 ? state.favorites.splice(i,1) : state.favorites.push({id:state.selected.id,name:state.selected.name,number:state.selected.number,date:new Date().toISOString()});
   saveFav();
 }
+
 function renderFav(){
   $('favCount').textContent = `收藏 ${state.favorites.length} 張`;
   $('favList').innerHTML = state.favorites.slice(0,8).map(f=>`• ${esc(f.name)} ${esc(f.number||'')}`).join('<br>') || '尚無收藏';
 }
+
 function sortCards(arr){
   const m = $('sortMode').value;
   return [...arr].sort((a,b)=>{
@@ -148,6 +153,7 @@ function sortCards(arr){
     return String(a.name||'').localeCompare(String(b.name||''));
   });
 }
+
 function filterLocal(){
   const q=$('q').value.trim().toLowerCase();
   const type=$('typeFilter').value;
@@ -161,9 +167,13 @@ function filterLocal(){
       (yr==='all' || String(y(c))===String(yr));
   }));
 }
+
 function renderList(){
   const el=$('list');
-  if(!state.filtered.length){ el.innerHTML='<div class="small">沒有資料。</div>'; return; }
+  if(!state.filtered.length){
+    el.innerHTML='<div class="small">沒有資料。</div>';
+    return;
+  }
   el.innerHTML = state.filtered.map((c,i)=>`
     <div class="card ${state.selected?.id===c.id?'sel':''}" data-i="${i}">
       <img src="${esc(img(c))}" onerror="this.onerror=null;this.src='https://via.placeholder.com/300x220?text=No+Image'" />
@@ -174,6 +184,7 @@ function renderList(){
   `).join('');
   [...el.querySelectorAll('.card')].forEach(node=>node.onclick=()=>selectCard(state.filtered[+node.dataset.i]));
 }
+
 function summary(c){
   return [
     `Name: ${c.name}`,
@@ -187,6 +198,7 @@ function summary(c){
     `Description: ${(c.text||c.description||'').replace(/\s+/g,' ').trim()}`
   ].filter(Boolean).join('\n');
 }
+
 function selectCard(c){
   state.selected=c;
   $('detailEmpty').style.display='none';
@@ -209,6 +221,7 @@ function selectCard(c){
   $('psaBtn').onclick=()=>window.open('https://www.psacard.com/pop','_blank');
   renderList();
 }
+
 function renderYears(){
   const years=[...new Set(state.cards.map(y).filter(Boolean))].sort((a,b)=>b-a).slice(0,6);
   $('yearChips').innerHTML=['all',...years].map(v=>`<span class="chip ${state.year===v?'active':''}" data-y="${v}">${v==='all'?'所有年份':v}</span>`).join('');
@@ -220,6 +233,7 @@ function renderYears(){
     if(state.filtered[0]) selectCard(state.filtered[0]);
   });
 }
+
 async function search(){
   const q=$('q').value.trim();
   if(!q){ setStatus('請輸入關鍵字。'); return }
@@ -246,14 +260,57 @@ async function search(){
   if(state.filtered[0]) selectCard(state.filtered[0]);
   setStatus(`找到 ${state.filtered.length} 張。`);
 }
-function aPTCG(c){ return {id:c.id,name:c.name,number:c.number,rarity:c.rarity,category:c.supertype,hp:c.hp,illustrator:c.artist,text:Array.isArray(c.text)?c.text.join(' '):c.text,set:{name:c.set?.name,releaseDate:c.set?.releaseDate,id:c.set?.id},image:c.images?.large||c.images?.small} }
-function aTCG(c){ return {id:c.id,name:c.name,number:c.number,localId:c.localId,rarity:c.rarity,category:c.category,hp:c.hp,illustrator:c.illustrator,text:c.text||c.description,set:c.set,image:c.image||c.images?.large||c.images?.small} }
-function dl(name,content,type='text/plain'){ const a=document.createElement('a'); a.href=URL.createObjectURL(new Blob([content],{type})); a.download=name; a.click() }
+
+function aPTCG(c){
+  return {id:c.id,name:c.name,number:c.number,rarity:c.rarity,category:c.supertype,hp:c.hp,illustrator:c.artist,text:Array.isArray(c.text)?c.text.join(' '):c.text,set:{name:c.set?.name,releaseDate:c.set?.releaseDate,id:c.set?.id},image:c.images?.large||c.images?.small};
+}
+
+function aTCG(c){
+  return {id:c.id,name:c.name,number:c.number,localId:c.localId,rarity:c.rarity,category:c.category,hp:c.hp,illustrator:c.illustrator,text:c.text||c.description,set:c.set,image:c.image||c.images?.large||c.images?.small};
+}
+
+function dl(name,content,type='text/plain'){
+  const a=document.createElement('a');
+  a.href=URL.createObjectURL(new Blob([content],{type}));
+  a.download=name;
+  a.click();
+}
+
 function copy(){ navigator.clipboard.writeText($('summary').value||'').then(()=>setStatus('已複製。')) }
+
 function txt(){ dl('pokemon_cards.txt',(state.filtered.length?state.filtered:state.cards).map(summary).join('\n\n---\n\n')) }
-function csv(){ const rows=['name,id,number,set,year,type,rarity,illustrator']; (state.filtered.length?state.filtered:state.cards).forEach(c=>rows.push([c.name,c.id,c.number||c.localId||'',c.set?.name||'',y(c),c.category||c.supertype||'',c.rarity||'',c.illustrator||c.artist||''].map(v=>`"${String(v).replace(/"/g,'""')}"`).join(','))); dl('pokemon_cards.csv',rows.join('\n'),'text/csv') }
-function favCsv(){ const rows=['id,name,number,date']; state.favorites.forEach(f=>rows.push([f.id,f.name,f.number||'',f.date].map(v=>`"${String(v).replace(/"/g,'""')}"`).join(','))); dl('favorites.csv',rows.join('\n'),'text/csv') }
-function reset(){ $('q').value=''; $('apiMode').value='tcgdex'; $('sortMode').value='new'; $('typeFilter').value='all'; $('rarityFilter').value='all'; state.year='all'; state.cards=[]; state.filtered=[]; state.selected=null; $('list').innerHTML=''; $('detailEmpty').style.display='block'; $('detailWrap').style.display='none'; $('summary').value=''; renderYears(); renderFav(); setStatus('已重置。') }
+
+function csv(){
+  const rows=['name,id,number,set,year,type,rarity,illustrator'];
+  (state.filtered.length?state.filtered:state.cards).forEach(c=>rows.push([c.name,c.id,c.number||c.localId||'',c.set?.name||'',y(c),c.category||c.supertype||'',c.rarity||'',c.illustrator||c.artist||''].map(v=>`"${String(v).replace(/"/g,'""')}"`).join(',')));
+  dl('pokemon_cards.csv',rows.join('\n'),'text/csv');
+}
+
+function favCsv(){
+  const rows=['id,name,number,date'];
+  state.favorites.forEach(f=>rows.push([f.id,f.name,f.number||'',f.date].map(v=>`"${String(v).replace(/"/g,'""')}"`).join(',')));
+  dl('favorites.csv',rows.join('\n'),'text/csv');
+}
+
+function reset(){
+  $('q').value='';
+  $('apiMode').value='tcgdex';
+  $('sortMode').value='new';
+  $('typeFilter').value='all';
+  $('rarityFilter').value='all';
+  state.year='all';
+  state.cards=[];
+  state.filtered=[];
+  state.selected=null;
+  $('list').innerHTML='';
+  $('detailEmpty').style.display='block';
+  $('detailWrap').style.display='none';
+  $('summary').value='';
+  renderYears();
+  renderFav();
+  setStatus('已重置。');
+}
+
 $('searchBtn').onclick=search;
 $('resetBtn').onclick=reset;
 $('copyBtn').onclick=copy;
@@ -269,6 +326,7 @@ $('q').addEventListener('keydown',e=>{if(e.key==='Enter')search()});
     if(state.filtered[0]) selectCard(state.filtered[0]);
   }
 }));
+
 renderFav();
 renderYears();
 setStatus('等待搜尋。');
