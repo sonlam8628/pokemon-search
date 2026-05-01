@@ -4,7 +4,7 @@
   <meta charset="UTF-8" />
   <meta name="viewport" content="width=device-width, initial-scale=1.0" />
   <title>Pokemon 卡牌查詢（日文輸入支援）</title>
-  <meta name="description" content="支援日文或英文 Pokemon 名稱輸入，自動轉英文查詢 Pokemon TCG 卡牌，並可依系列與種類排序。">
+  <meta name="description" content="支援日文或英文 Pokemon 名稱輸入，自動轉英文查詢 Pokemon TCG 卡牌，並提供價格參考連結與 HKD 換算工具。">
   <style>
     :root {
       --bg: #f6f3ee;
@@ -14,6 +14,7 @@
       --muted: #6a6358;
       --primary: #146b73;
       --soft: #e6f1f2;
+      --soft-2: #f4f8f8;
       --shadow: 0 12px 30px rgba(0, 0, 0, 0.08);
       --radius: 20px;
     }
@@ -44,7 +45,7 @@
     .hero,
     .results,
     .modal-card {
-      background: rgba(255, 253, 249, 0.94);
+      background: rgba(255, 253, 249, 0.95);
       border: 1px solid var(--line);
       box-shadow: var(--shadow);
     }
@@ -80,7 +81,8 @@
       font: inherit;
     }
 
-    .main-btn {
+    .main-btn,
+    .link-btn {
       min-height: 44px;
       border-radius: 999px;
       border: 1px solid var(--line);
@@ -88,6 +90,10 @@
       padding: 10px 16px;
       cursor: pointer;
       color: var(--text);
+      text-decoration: none;
+      display: inline-flex;
+      align-items: center;
+      justify-content: center;
     }
 
     .main-btn.primary {
@@ -274,6 +280,7 @@
       justify-content: center;
       padding: 18px;
       z-index: 20;
+      overflow-y: auto;
     }
 
     .modal.open {
@@ -281,7 +288,7 @@
     }
 
     .modal-card {
-      width: min(920px, 100%);
+      width: min(980px, 100%);
       border-radius: 24px;
       padding: 18px;
       display: grid;
@@ -289,6 +296,7 @@
       gap: 18px;
       position: relative;
       background: #fffdf9;
+      margin: auto;
     }
 
     .modal-card img {
@@ -331,9 +339,58 @@
       word-break: break-word;
     }
 
+    .price-panel {
+      margin-top: 14px;
+      border: 1px solid var(--line);
+      border-radius: 16px;
+      padding: 14px;
+      background: var(--soft-2);
+      display: grid;
+      gap: 12px;
+    }
+
+    .price-panel h4 {
+      margin: 0;
+      font-size: 18px;
+    }
+
+    .price-links {
+      display: flex;
+      flex-wrap: wrap;
+      gap: 10px;
+    }
+
+    .price-note {
+      color: var(--muted);
+      font-size: 13px;
+      line-height: 1.6;
+    }
+
+    .converter-grid {
+      display: grid;
+      grid-template-columns: repeat(2, minmax(0, 1fr));
+      gap: 12px;
+    }
+
+    .result-box {
+      border-radius: 12px;
+      background: #fff;
+      border: 1px solid var(--line);
+      padding: 12px;
+      font-size: 14px;
+      line-height: 1.6;
+    }
+
+    .result-box strong {
+      display: block;
+      margin-bottom: 4px;
+      font-size: 15px;
+    }
+
     @media (max-width: 860px) {
       .grid,
-      .modal-card {
+      .modal-card,
+      .converter-grid {
         grid-template-columns: 1fr;
       }
     }
@@ -352,7 +409,7 @@
   <div class="wrap">
     <section class="hero">
       <h1>Pokemon 卡牌查詢（日文輸入支援）</h1>
-      <p class="sub">可輸入日文或英文 Pokémon 名稱。系統會先把日文名稱轉成英文官方名，再用 Pokémon TCG API 查卡牌。預設卡號由小至大，並可切換為最新系列、最舊系列或卡片種類排序。</p>
+      <p class="sub">可輸入日文或英文 Pokémon 名稱。系統會先把日文名稱轉成英文官方名，再用 Pokémon TCG API 查卡牌。你也可以在打開卡面後，查看 eBay / SNKRDUNK 價格參考連結，並用 USD / JPY 前端換算成 HKD。</p>
 
       <form id="searchForm">
         <div class="grid">
@@ -396,7 +453,7 @@
       </div>
 
       <div class="footnote">
-        Pokémon TCG API 的 search 端點支援 `orderBy` 排序，而 card object 也提供 `supertype`、`number`、`set.releaseDate` 與 `images.small` / `images.large` 等欄位。[web:1][web:24][web:19]
+        Pokémon TCG API 的 search 端點支援 `orderBy` 排序，而 card object 也提供 `number`、`supertype`、`set.releaseDate` 及 `images.small` / `images.large` 圖片欄位。[web:1][web:24][web:19]
       </div>
     </section>
   </div>
@@ -412,6 +469,57 @@
         <div class="line" id="modalRarity"></div>
         <div class="line" id="modalArtist"></div>
         <div class="line" id="modalResolvedName"></div>
+
+        <div class="price-panel">
+          <h4>價格參考</h4>
+          <div class="price-links">
+            <a class="link-btn" id="ebayLink" href="#" target="_blank" rel="noopener noreferrer">打開 eBay 搜尋</a>
+            <a class="link-btn" id="snkrdunkLink" href="#" target="_blank" rel="noopener noreferrer">打開 SNKRDUNK 搜尋</a>
+          </div>
+
+          <div class="converter-grid">
+            <div class="field">
+              <label for="usdPrice">USD 價格參考</label>
+              <input id="usdPrice" type="number" min="0" step="0.01" placeholder="例如 25.5" />
+            </div>
+
+            <div class="field">
+              <label for="jpyPrice">JPY 價格參考</label>
+              <input id="jpyPrice" type="number" min="0" step="1" placeholder="例如 3980" />
+            </div>
+          </div>
+
+          <div class="converter-grid">
+            <div class="field">
+              <label for="usdToHkdRate">USD → HKD 匯率</label>
+              <input id="usdToHkdRate" type="number" min="0" step="0.0001" value="7.80" />
+            </div>
+
+            <div class="field">
+              <label for="jpyToHkdRate">JPY → HKD 匯率</label>
+              <input id="jpyToHkdRate" type="number" min="0" step="0.0001" value="0.052" />
+            </div>
+          </div>
+
+          <div class="actions">
+            <button class="main-btn" type="button" id="calcPriceBtn">計算 HKD</button>
+          </div>
+
+          <div class="converter-grid">
+            <div class="result-box">
+              <strong>USD 估算 HKD</strong>
+              <div id="usdHkdResult">尚未計算</div>
+            </div>
+            <div class="result-box">
+              <strong>JPY 估算 HKD</strong>
+              <div id="jpyHkdResult">尚未計算</div>
+            </div>
+          </div>
+
+          <div class="price-note">
+            這裡是純前端參考工具，不是即時成交 API。eBay 與 SNKRDUNK 連結會打開平台搜尋頁，而 HKD 換算會用你輸入的價格與匯率做估算；實際價格仍可能受手續費、運費與市場波動影響。[web:321][web:329][web:328][web:325]
+          </div>
+        </div>
       </div>
     </div>
   </div>
@@ -435,6 +543,16 @@
     const modalRarity = document.getElementById('modalRarity');
     const modalArtist = document.getElementById('modalArtist');
     const modalResolvedName = document.getElementById('modalResolvedName');
+
+    const ebayLink = document.getElementById('ebayLink');
+    const snkrdunkLink = document.getElementById('snkrdunkLink');
+    const usdPrice = document.getElementById('usdPrice');
+    const jpyPrice = document.getElementById('jpyPrice');
+    const usdToHkdRate = document.getElementById('usdToHkdRate');
+    const jpyToHkdRate = document.getElementById('jpyToHkdRate');
+    const calcPriceBtn = document.getElementById('calcPriceBtn');
+    const usdHkdResult = document.getElementById('usdHkdResult');
+    const jpyHkdResult = document.getElementById('jpyHkdResult');
 
     let currentCards = [];
     let lastResolvedName = '';
@@ -460,6 +578,43 @@
 
     function isJapaneseText(text) {
       return /[\u3040-\u30ff\u3400-\u4dbf\u4e00-\u9fff]/.test(text);
+    }
+
+    function encodeSearchTerm(card) {
+      const parts = [
+        card.name || '',
+        card.number || '',
+        card.set?.name || '',
+        'pokemon card'
+      ].filter(Boolean);
+      return encodeURIComponent(parts.join(' '));
+    }
+
+    function updatePriceLinks(card) {
+      const query = encodeSearchTerm(card);
+      ebayLink.href = `https://www.ebay.com/sch/i.html?_nkw=${query}`;
+      snkrdunkLink.href = `https://snkrdunk.com/en/search/result?keyword=${query}`;
+    }
+
+    function calculateHkd() {
+      const usd = Number(usdPrice.value || 0);
+      const jpy = Number(jpyPrice.value || 0);
+      const usdRate = Number(usdToHkdRate.value || 0);
+      const jpyRate = Number(jpyToHkdRate.value || 0);
+
+      if (usd > 0 && usdRate > 0) {
+        const hkd = usd * usdRate;
+        usdHkdResult.textContent = `約 HK$ ${hkd.toFixed(2)}（USD ${usd} × ${usdRate}）`;
+      } else {
+        usdHkdResult.textContent = '尚未計算';
+      }
+
+      if (jpy > 0 && jpyRate > 0) {
+        const hkd = jpy * jpyRate;
+        jpyHkdResult.textContent = `約 HK$ ${hkd.toFixed(2)}（JPY ${jpy} × ${jpyRate}）`;
+      } else {
+        jpyHkdResult.textContent = '尚未計算';
+      }
     }
 
     async function resolvePokemonName(input) {
@@ -544,6 +699,12 @@
         modalImg.removeAttribute('src');
       }
       modalImg.alt = `${card.name || 'Pokemon'} 卡牌大圖`;
+
+      updatePriceLinks(card);
+      usdPrice.value = '';
+      jpyPrice.value = '';
+      usdHkdResult.textContent = '尚未計算';
+      jpyHkdResult.textContent = '尚未計算';
 
       modal.classList.add('open');
       modal.setAttribute('aria-hidden', 'false');
@@ -670,6 +831,8 @@
       hasMore = false;
       currentCards = [];
     });
+
+    calcPriceBtn.addEventListener('click', calculateHkd);
 
     searchForm.addEventListener('submit', async (event) => {
       event.preventDefault();
