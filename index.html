@@ -116,7 +116,7 @@ const demo = [
   {id:'base1-4',name:'Charizard',number:'4/102',localId:'4',rarity:'Rare Holo',category:'Pokémon',set:{name:'Base Set',releaseDate:'1999-01-09',id:'base1'},illustrator:'Mitsuhiro Arita',text:'',image:'https://images.pokemontcg.io/base1/4_hires.png'},
   {id:'swshp-063',name:'Pikachu V',number:'SWSH063',localId:'063',rarity:'Promo',category:'Pokémon',set:{name:'Sword & Shield Promo',releaseDate:'2020-02-07',id:'swshp'},illustrator:'sowsow',text:'',image:'https://images.pokemontcg.io/swshp/063_hires.png'}
 ];
-function esc(v){return String(v ?? '').replace(/[&<>\"']/g,m=>({'&':'&amp;','<':'&lt;','>':'&gt;','\"':'&quot;',\"'\":'&#39;'}[m]))}
+function esc(v){return String(v ?? '').replace(/[&<>\"']/g,m=>({'&':'&amp;','<':'&lt;','>':'&gt;','\"':'&quot;',"'":'&#39;'}[m]))}
 function y(c){return c.set?.releaseDate ? new Date(c.set.releaseDate).getFullYear() : ''}
 function img(c){return c.image?.large || c.image?.small || c.image || c.images?.large || c.images?.small || 'https://via.placeholder.com/600x420?text=No+Image'}
 function setStatus(t){ $('status').textContent = t }
