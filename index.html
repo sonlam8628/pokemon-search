@@ -3,8 +3,8 @@
 <head>
   <meta charset="UTF-8" />
   <meta name="viewport" content="width=device-width, initial-scale=1.0" />
-  <title>pokemon-simple-search</title>
-  <meta name="description" content="超穩定簡化版 Pokemon 日文卡牌搜尋，只支援日文名稱與英文名稱轉日文搜尋。">
+  <title>pokemon-search-fixed</title>
+  <meta name="description" content="修正版 Pokemon 日文卡牌搜尋，支援日文名稱與英文 Pokémon 名稱轉日文搜尋，並修正 TCGdex 圖片路徑。">
   <style>
     :root {
       --bg: #f7f6f2;
@@ -42,7 +42,7 @@
 
     .hero,
     .panel {
-      background: rgba(255, 253, 249, 0.95);
+      background: rgba(255, 253, 249, 0.96);
       border: 1px solid var(--border);
       border-radius: 24px;
       box-shadow: var(--shadow);
@@ -288,7 +288,7 @@
     <section class="hero">
       <h1>Pokemon 日文卡牌搜尋</h1>
       <p class="sub">
-        這是超穩定簡化版：只做最穩的名稱搜尋。你可以輸入日文名稱，或輸入英文 Pokémon 名稱後先轉成日文，再去查日文版卡片資料。
+        修正版：支援日文名稱，或先把英文 Pokémon 名稱轉成日文後再搜尋，並修正 TCGdex 卡圖路徑與資料讀取方式。
       </p>
 
       <form id="searchForm">
@@ -316,7 +316,7 @@
       </form>
 
       <div class="tips">
-        這版不做卡號搜尋、不做 PSA、不做大圖 modal，目的就是先保證 GitHub Pages 上能穩定顯示結果。
+        這版只保留最穩的名稱搜尋，不做卡號、PSA、modal，先確保 GitHub Pages 能正常顯示卡牌資料與圖片。
       </div>
     </section>
 
@@ -331,7 +331,7 @@
       </div>
 
       <div class="footnote">
-        TCGdex 文件說明 cards 陣列端點可使用 filtering、sorting、pagination，而 `name=value` 會做包含搜尋，因此這版直接用 `name=` 查日文卡片，盡量降低前端複雜度。[page:1][page:2]
+        TCGdex 資產文件說明卡圖 URL 需要補上格式與尺寸，例如 `low.webp` 或 `high.png`；cards 文件則提供卡片列表，因此這版改成先安全取資料，再補齊圖片路徑顯示。[web:404][web:403][web:44]
       </div>
     </section>
   </div>
@@ -375,11 +375,21 @@
     }
 
     function getCardImage(card) {
-      if (typeof card.image === 'string') return card.image;
-      if (card.image && typeof card.image === 'object') {
-        return card.image.high || card.image.low || Object.values(card.image)[0] || '';
+      let base = '';
+
+      if (typeof card.image === 'string') {
+        base = card.image;
+      } else if (card.image && typeof card.image === 'object') {
+        base = card.image.high || card.image.low || Object.values(card.image)[0] || '';
       }
-      return '';
+
+      if (!base) return '';
+
+      if (/\.(png|jpg|jpeg|webp)$/i.test(base)) {
+        return base;
+      }
+
+      return `${base}/low.webp`;
     }
 
     function getReleaseYear(card) {
@@ -444,13 +454,22 @@
     async function fetchJapaneseCardsByName(japaneseName) {
       const url = new URL('https://api.tcgdex.net/v2/ja/cards');
       url.searchParams.set('name', japaneseName);
-      url.searchParams.set('pagination:page', '1');
-      url.searchParams.set('pagination:itemsPerPage', '60');
-      url.searchParams.set('sort:field', 'releaseDate');
-      url.searchParams.set('sort:order', sortMode.value === 'oldest' ? 'ASC' : 'DESC');
 
-      const data = await safeJsonFetch(url.toString());
-      return Array.isArray(data) ? data : (data.cards || data.data || []);
+      const response = await fetch(url.toString(), {
+        headers: { 'Accept': 'application/json' }
+      });
+
+      if (!response.ok) {
+        throw new Error(`TCGdex 請求失敗：${response.status}`);
+      }
+
+      const data = await response.json();
+
+      if (Array.isArray(data)) return data;
+      if (Array.isArray(data.cards)) return data.cards;
+      if (Array.isArray(data.data)) return data.data;
+
+      return [];
     }
 
     function renderCards(cards) {
