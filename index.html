@@ -3,8 +3,8 @@
 <head>
   <meta charset="UTF-8" />
   <meta name="viewport" content="width=device-width, initial-scale=1.0" />
-  <title>pokemon-search-full-data</title>
-  <meta name="description" content="Pokemon 日文卡牌搜尋完整資料版，支援日文名稱與英文 Pokémon 名稱轉日文搜尋，並顯示較完整卡牌欄位。">
+  <title>pokemon-full-data-api</title>
+  <meta name="description" content="使用 Pokémon TCG API 的完整卡牌資料搜尋頁，支援名稱搜尋、詳細欄位展示與多圖片 fallback。">
   <style>
     :root {
       --bg: #f7f6f2;
@@ -18,6 +18,7 @@
       --primary: #01696f;
       --primary-hover: #0c4e54;
       --soft: #e8f1f3;
+      --gold: #efe5c7;
       --shadow: 0 10px 30px rgba(0,0,0,0.08);
       --radius: 18px;
     }
@@ -38,7 +39,7 @@
     }
 
     .wrap {
-      width: min(1240px, calc(100% - 24px));
+      width: min(1280px, calc(100% - 24px));
       margin: 0 auto;
       padding: 24px 0 48px;
     }
@@ -173,7 +174,7 @@
 
     .cards {
       display: grid;
-      grid-template-columns: repeat(auto-fill, minmax(340px, 1fr));
+      grid-template-columns: 1fr;
       gap: 18px;
     }
 
@@ -183,7 +184,7 @@
       border-radius: 22px;
       overflow: hidden;
       display: grid;
-      grid-template-columns: 220px 1fr;
+      grid-template-columns: 260px 1fr;
       min-height: 100%;
     }
 
@@ -196,14 +197,14 @@
     }
 
     .thumb img {
-      max-height: 320px;
+      max-height: 360px;
       object-fit: contain;
     }
 
     .fallback {
       width: 100%;
       height: 100%;
-      min-height: 300px;
+      min-height: 320px;
       border: 1px dashed var(--border);
       border-radius: 12px;
       display: grid;
@@ -230,7 +231,7 @@
 
     .meta h3 {
       margin: 0;
-      font-size: 22px;
+      font-size: 24px;
       line-height: 1.2;
     }
 
@@ -245,6 +246,10 @@
       border-radius: 999px;
       background: var(--soft);
       font-size: 12px;
+    }
+
+    .badge.gold {
+      background: var(--gold);
     }
 
     .grid-info {
@@ -334,26 +339,16 @@
       line-height: 1.7;
     }
 
-    @media (max-width: 980px) {
-      .cards {
+    @media (max-width: 900px) {
+      .card,
+      .form-grid {
         grid-template-columns: 1fr;
-      }
-    }
-
-    @media (max-width: 820px) {
-      .form-grid,
-      .card {
-        grid-template-columns: 1fr;
-      }
-
-      .thumb img {
-        max-height: 360px;
       }
     }
 
     @media (max-width: 520px) {
       .wrap {
-        width: min(100% - 16px, 1240px);
+        width: min(100% - 16px, 1280px);
       }
 
       .grid-info {
@@ -365,16 +360,16 @@
 <body>
   <div class="wrap">
     <section class="hero">
-      <h1>Pokemon 日文卡牌搜尋</h1>
+      <h1>Pokémon TCG 完整資料版</h1>
       <p class="sub">
-        完整資料版：盡量把卡片可取得欄位完整顯示，包括 HP、類型、進化、招式、弱點、抗性、撤退、描述、插畫師等。沒有資料的欄位會自動收起來或標示未提供。
+        這版改用 Pokémon TCG API 主資料源，顯示更完整的卡片資訊：HP、屬性、攻擊、弱點、抗性、撤退、規則、插畫師、系列與圖片。
       </p>
 
       <form id="searchForm">
         <div class="form-grid">
           <div class="field">
-            <label for="keyword">輸入日文名稱 / 英文 Pokémon 名稱</label>
-            <input id="keyword" type="text" placeholder="例如 ピカチュウ / Pikachu" autocomplete="off" />
+            <label for="keyword">輸入英文卡名 / 日文名稱嘗試 / 卡號輔助</label>
+            <input id="keyword" type="text" placeholder="例如 Pikachu / Charizard / ピカチュウ" autocomplete="off" />
           </div>
 
           <div class="field">
@@ -388,14 +383,15 @@
 
         <div class="actions">
           <button class="btn primary" type="submit">開始搜尋</button>
-          <button class="btn" type="button" data-fill="ピカチュウ">ピカチュウ</button>
           <button class="btn" type="button" data-fill="Pikachu">Pikachu</button>
+          <button class="btn" type="button" data-fill="Charizard">Charizard</button>
+          <button class="btn" type="button" data-fill="ピカチュウ">ピカチュウ</button>
           <button class="btn" type="button" id="clearBtn">清空</button>
         </div>
       </form>
 
       <div class="tips">
-        這版會把 TCGdex 能提供的欄位盡量展開，但某些卡若資料源本身沒有該欄，畫面仍只能顯示未提供。
+        Pokémon TCG API 預設會回所有欄位，不用另外 select；你可以用 q 查詢、用 pageSize 分頁，畫面會更容易顯示完整資料。[web:1][web:413]
       </div>
     </section>
 
@@ -406,11 +402,11 @@
       </div>
 
       <div id="resultsArea">
-        <div class="empty">請輸入日文名稱或英文 Pokémon 名稱。</div>
+        <div class="empty">請輸入卡名。</div>
       </div>
 
       <div class="footnote">
-        TCGdex 的 Card 物件包含許多欄位，例如 `hp`、`types`、`evolveFrom`、`attacks`、`weaknesses`、`resistances`、`retreat`、`description`、`illustrator` 等；但 Pokémon TCG API 的 cards search 文件也明確表示預設會回完整欄位，所以若你之後要更完整資料，仍建議考慮雙資料源或改主要資料源。[page:1][page:2]
+        Pokémon TCG API 的 cards search 支援 `q`、`page`、`pageSize`、`orderBy`，而 card object 提供比 TCGdex 更適合完整展示的欄位結構；因此這版會明顯比前一版更有資料感。[web:1][web:413]
       </div>
     </section>
   </div>
@@ -424,8 +420,6 @@
     const resultsArea = document.getElementById('resultsArea');
 
     let currentCards = [];
-    let currentEnglishName = '';
-    let currentJapaneseName = '';
 
     function escapeHtml(str = '') {
       return String(str).replace(/[&<>'"]/g, char => ({
@@ -445,46 +439,23 @@
       return /[\u3040-\u30ff\u3400-\u4dbf\u4e00-\u9fff]/.test(text);
     }
 
-    function getCardName(card) {
-      if (typeof card.name === 'string') return card.name;
-      if (card.name && typeof card.name === 'object') {
-        return card.name.ja || card.name.en || Object.values(card.name)[0] || '';
-      }
-      return '';
-    }
-
     function getCardImageCandidates(card) {
-      let base = '';
+      const images = card.images || {};
+      const candidates = [
+        images.large,
+        images.small,
+        card.imageUrlHiRes,
+        card.imageUrl,
+        images.high,
+        images.low
+      ].filter(Boolean);
 
-      if (typeof card.image === 'string') {
-        base = card.image;
-      } else if (card.image && typeof card.image === 'object') {
-        base = card.image.high || card.image.low || Object.values(card.image)[0] || '';
-      }
-
-      if (!base) return [];
-
-      if (/\.(png|jpg|jpeg|webp)$/i.test(base)) {
-        return [base];
-      }
-
-      return [
-        `${base}/low.webp`,
-        `${base}/high.png`,
-        `${base}/low.png`,
-        `${base}/high.webp`
-      ];
+      return [...new Set(candidates)];
     }
 
     function getReleaseYear(card) {
-      const date = card.set?.releaseDate || card.releaseDate || '';
+      const date = card.set?.releaseDate || '';
       return /^\d{4}-\d{2}-\d{2}$/.test(date) ? date.slice(0, 4) : '未提供';
-    }
-
-    function parseCardNumber(value) {
-      const str = String(value || '');
-      const m = str.match(/\d+/);
-      return m ? Number(m[0]) : Number.MAX_SAFE_INTEGER;
     }
 
     function formatList(value, fallback = '未提供') {
@@ -509,7 +480,7 @@
       return list.map(attack => {
         const cost = Array.isArray(attack.cost) && attack.cost.length ? `費用：${attack.cost.join(' / ')}` : '';
         const damage = attack.damage ? `傷害：${attack.damage}` : '';
-        const effect = attack.effect || attack.description || '';
+        const effect = attack.text || attack.description || '';
         return `
           <div class="item">
             <strong>${escapeHtml(attack.name || '未命名招式')}</strong>
@@ -523,22 +494,20 @@
 
     function sortCards(cards, mode) {
       const copied = [...cards];
-
       if (mode === 'oldest') {
         copied.sort((a, b) => {
-          const aDate = new Date(a.set?.releaseDate || a.releaseDate || '2999-12-31').getTime();
-          const bDate = new Date(b.set?.releaseDate || b.releaseDate || '2999-12-31').getTime();
+          const aDate = new Date(a.set?.releaseDate || '2999-12-31').getTime();
+          const bDate = new Date(b.set?.releaseDate || '2999-12-31').getTime();
           if (aDate !== bDate) return aDate - bDate;
-          return parseCardNumber(a.localId || a.id) - parseCardNumber(b.localId || b.id);
+          return (a.number || '').localeCompare(b.number || '');
         });
         return copied;
       }
-
       copied.sort((a, b) => {
-        const aDate = new Date(a.set?.releaseDate || a.releaseDate || '1900-01-01').getTime();
-        const bDate = new Date(b.set?.releaseDate || b.releaseDate || '1900-01-01').getTime();
+        const aDate = new Date(a.set?.releaseDate || '1900-01-01').getTime();
+        const bDate = new Date(b.set?.releaseDate || '1900-01-01').getTime();
         if (bDate !== aDate) return bDate - aDate;
-        return parseCardNumber(a.localId || a.id) - parseCardNumber(b.localId || b.id);
+        return (a.number || '').localeCompare(b.number || '');
       });
       return copied;
     }
@@ -547,90 +516,74 @@
       const response = await fetch(url, {
         headers: { 'Accept': 'application/json' }
       });
-
-      if (!response.ok) {
-        throw new Error(`API 請求失敗：${response.status}`);
-      }
-
+      if (!response.ok) throw new Error(`API 請求失敗：${response.status}`);
       return await response.json();
     }
 
-    async function resolveEnglishToJapaneseName(englishName) {
-      const base = normalizeText(englishName);
-      const url = `https://pokeapi.co/api/v2/pokemon-species/${encodeURIComponent(base)}`;
-      const data = await safeJsonFetch(url);
-      const names = data.names || [];
-      const ja = names.find(item => item.language && (item.language.name === 'ja' || item.language.name === 'ja-Hrkt'));
+    async function fetchEnglishCards(query) {
+      const url = new URL('https://api.pokemontcg.io/v2/cards');
+      url.searchParams.set('q', query);
+      url.searchParams.set('pageSize', '20');
+      url.searchParams.set('orderBy', '-set.releaseDate,-number');
 
-      if (!ja || !ja.name) {
-        throw new Error(`找不到 ${englishName} 的日文名稱`);
-      }
-
-      return ja.name;
+      const data = await safeJsonFetch(url.toString());
+      return data.data || [];
     }
 
-    async function fetchJapaneseCardsByName(japaneseName) {
-      const url = new URL('https://api.tcgdex.net/v2/ja/cards');
-      url.searchParams.set('name', japaneseName);
+    async function fetchJapaneseFallback(query) {
+      const url = new URL('https://api.pokemontcg.io/v2/cards');
+      url.searchParams.set('q', `name:${query.replace(/"/g, '\\"')}`);
+      url.searchParams.set('pageSize', '20');
+      url.searchParams.set('orderBy', '-set.releaseDate,-number');
 
-      const response = await fetch(url.toString(), {
-        headers: { 'Accept': 'application/json' }
-      });
+      const data = await safeJsonFetch(url.toString());
+      return data.data || [];
+    }
 
-      if (!response.ok) {
-        throw new Error(`TCGdex 請求失敗：${response.status}`);
-      }
-
-      const data = await response.json();
-
-      if (Array.isArray(data)) return data;
-      if (Array.isArray(data.cards)) return data.cards;
-      if (Array.isArray(data.data)) return data.data;
-
-      return [];
+    function pickBestImage(card) {
+      const candidates = getCardImageCandidates(card);
+      return candidates[0] || '';
     }
 
     function renderCards(cards) {
       currentCards = cards;
-
       if (!cards.length) {
-        resultsArea.innerHTML = '<div class="empty">找不到日文卡片結果。請先試日文名稱，例如 ピカチュウ。</div>';
+        resultsArea.innerHTML = '<div class="empty">找不到卡片結果。請試英文卡名，例如 Pikachu / Charizard。</div>';
         return;
       }
 
       const html = cards.map(card => {
-        const name = getCardName(card) || '未命名卡片';
-        const images = getCardImageCandidates(card);
-        const firstImage = images[0] || '';
-        const remainingImages = escapeHtml(JSON.stringify(images.slice(1)));
+        const name = card.name || '未命名卡片';
+        const image = pickBestImage(card);
+        const fallbackList = escapeHtml(JSON.stringify(getCardImageCandidates(card).slice(1)));
 
-        const cardNo = card.localId || card.id || '未提供';
-        const setName = card.set?.name || card.set?.id || '未提供';
-        const setSeries = card.set?.serie?.name || card.set?.series || '未提供';
-        const year = getReleaseYear(card);
-        const category = card.category || card.supertype || '未提供';
-        const rarity = card.rarity || '未提供';
-        const illustrator = card.illustrator || '未提供';
-        const hp = card.hp || '未提供';
-        const types = formatList(card.types, '未提供');
-        const evolveFrom = card.evolveFrom || '未提供';
-        const stage = card.stage || '未提供';
-        const weakness = formatWeaknesses(card.weaknesses);
-        const resistance = formatResistances(card.resistances);
-        const retreat = card.retreat !== undefined && card.retreat !== null ? String(card.retreat) : '未提供';
-        const description = card.description || card.effect || '';
         const attacksHtml = formatAttacks(card.attacks);
+        const rules = Array.isArray(card.rules) && card.rules.length ? card.rules.join(' / ') : '';
+        const subtypes = formatList(card.subtypes, '未提供');
+        const types = formatList(card.types, '未提供');
+        const weaknesses = formatWeaknesses(card.weaknesses);
+        const resistances = formatResistances(card.resistances);
+        const retreat = Array.isArray(card.retreatCost) && card.retreatCost.length ? card.retreatCost.join(' / ') : '未提供';
+        const hp = card.hp || '未提供';
+        const illustrator = card.illustrator || '未提供';
+        const series = card.set?.series || '未提供';
+        const setName = card.set?.name || '未提供';
+        const setId = card.set?.id || '未提供';
+        const number = card.number || '未提供';
+        const rarity = card.rarity || '未提供';
+        const supertype = card.supertype || '未提供';
+        const nationalDex = Array.isArray(card.nationalPokedexNumbers) ? card.nationalPokedexNumbers.join(', ') : '未提供';
 
-        const snkrdunkQuery = encodeURIComponent([name, cardNo].filter(Boolean).join(' '));
-        const ebayQuery = encodeURIComponent([currentEnglishName || name, cardNo, 'pokemon card'].filter(Boolean).join(' '));
+        const tcgplayerLink = card.tcgplayer?.url ? `<a class="link-btn" href="${escapeHtml(card.tcgplayer.url)}" target="_blank" rel="noopener noreferrer">TCGplayer</a>` : '';
+        const cardmarketLink = card.cardmarket?.url ? `<a class="link-btn" href="${escapeHtml(card.cardmarket.url)}" target="_blank" rel="noopener noreferrer">Cardmarket</a>` : '';
 
         return `
           <article class="card">
             <div class="thumb">
-              ${firstImage ? `
+              ${image ? `
                 <img
-                  src="${escapeHtml(firstImage)}"
-                  data-fallbacks='${remainingImages}'
+                  src="${escapeHtml(image)}"
+                  data-fallbacks='${fallbackList}'
                   alt="${escapeHtml(name)} 卡圖"
                   loading="lazy"
                   width="245"
@@ -656,9 +609,9 @@
               <div class="title-row">
                 <h3>${escapeHtml(name)}</h3>
                 <div class="badges">
-                  <span class="badge">${escapeHtml(cardNo)}</span>
+                  <span class="badge">${escapeHtml(number)}</span>
                   <span class="badge">${escapeHtml(rarity)}</span>
-                  <span class="badge">${escapeHtml(category)}</span>
+                  <span class="badge gold">${escapeHtml(supertype)}</span>
                 </div>
               </div>
 
@@ -668,12 +621,16 @@
                   <div class="value">${escapeHtml(setName)}</div>
                 </div>
                 <div class="info-box">
-                  <div class="label">大系列</div>
-                  <div class="value">${escapeHtml(setSeries)}</div>
+                  <div class="label">Set ID</div>
+                  <div class="value">${escapeHtml(setId)}</div>
+                </div>
+                <div class="info-box">
+                  <div class="label">Series</div>
+                  <div class="value">${escapeHtml(series)}</div>
                 </div>
                 <div class="info-box">
                   <div class="label">推出年份</div>
-                  <div class="value">${escapeHtml(year)}</div>
+                  <div class="value">${escapeHtml(getReleaseYear(card))}</div>
                 </div>
                 <div class="info-box">
                   <div class="label">HP</div>
@@ -684,39 +641,57 @@
                   <div class="value">${escapeHtml(types)}</div>
                 </div>
                 <div class="info-box">
-                  <div class="label">進化階段</div>
-                  <div class="value">${escapeHtml(stage)}</div>
+                  <div class="label">子類型</div>
+                  <div class="value">${escapeHtml(subtypes)}</div>
                 </div>
                 <div class="info-box">
-                  <div class="label">由誰進化</div>
-                  <div class="value">${escapeHtml(evolveFrom)}</div>
-                </div>
-                <div class="info-box">
-                  <div class="label">插畫師</div>
-                  <div class="value">${escapeHtml(illustrator)}</div>
+                  <div class="label">National Dex</div>
+                  <div class="value">${escapeHtml(nationalDex)}</div>
                 </div>
                 <div class="info-box">
                   <div class="label">弱點</div>
-                  <div class="value">${escapeHtml(weakness)}</div>
+                  <div class="value">${escapeHtml(weaknesses)}</div>
                 </div>
                 <div class="info-box">
                   <div class="label">抗性</div>
-                  <div class="value">${escapeHtml(resistance)}</div>
+                  <div class="value">${escapeHtml(resistances)}</div>
                 </div>
                 <div class="info-box">
                   <div class="label">撤退</div>
                   <div class="value">${escapeHtml(retreat)}</div>
                 </div>
                 <div class="info-box">
-                  <div class="label">更新時間</div>
-                  <div class="value">${escapeHtml(card.updated || '未提供')}</div>
+                  <div class="label">插畫師</div>
+                  <div class="value">${escapeHtml(illustrator)}</div>
                 </div>
               </div>
 
-              ${description ? `
+              ${card.flavorText ? `
                 <div class="section">
-                  <div class="section-title">卡片描述</div>
-                  <div class="small">${escapeHtml(description)}</div>
+                  <div class="section-title">Flavor Text</div>
+                  <div class="small">${escapeHtml(card.flavorText)}</div>
+                </div>
+              ` : ''}
+
+              ${rules ? `
+                <div class="section">
+                  <div class="section-title">Rules</div>
+                  <div class="small">${escapeHtml(rules)}</div>
+                </div>
+              ` : ''}
+
+              ${card.abilities && card.abilities.length ? `
+                <div class="section">
+                  <div class="section-title">Abilities</div>
+                  <div class="list">
+                    ${card.abilities.map(ability => `
+                      <div class="item">
+                        <strong>${escapeHtml(ability.name || '未命名能力')}</strong>
+                        <div class="small">${escapeHtml(ability.text || '未提供')}</div>
+                        <div class="small">類型：${escapeHtml(ability.type || '未提供')}</div>
+                      </div>
+                    `).join('')}
+                  </div>
                 </div>
               ` : ''}
 
@@ -727,11 +702,18 @@
                 </div>
               ` : ''}
 
+              ${card.ancientTrait ? `
+                <div class="section">
+                  <div class="section-title">Ancient Trait</div>
+                  <div class="small">${escapeHtml(card.ancientTrait.name || '')} ${escapeHtml(card.ancientTrait.text || '')}</div>
+                </div>
+              ` : ''}
+
               <div class="section">
-                <div class="section-title">外部搜尋</div>
+                <div class="section-title">外部連結</div>
                 <div class="links">
-                  <a class="link-btn" href="https://snkrdunk.com/en/search/result?keyword=${snkrdunkQuery}" target="_blank" rel="noopener noreferrer">SNKRDUNK</a>
-                  <a class="link-btn" href="https://www.ebay.com/sch/i.html?_nkw=${ebayQuery}" target="_blank" rel="noopener noreferrer">eBay</a>
+                  ${card.tcgplayer?.url ? `<a class="link-btn" href="${escapeHtml(card.tcgplayer.url)}" target="_blank" rel="noopener noreferrer">TCGplayer</a>` : ''}
+                  ${card.cardmarket?.url ? `<a class="link-btn" href="${escapeHtml(card.cardmarket.url)}" target="_blank" rel="noopener noreferrer">Cardmarket</a>` : ''}
                 </div>
               </div>
             </div>
@@ -747,42 +729,34 @@
 
       if (!rawInput) {
         statusEl.textContent = '請先輸入名稱。';
-        resultsArea.innerHTML = '<div class="empty">請輸入日文名稱或英文 Pokémon 名稱。</div>';
+        resultsArea.innerHTML = '<div class="empty">請輸入卡名。</div>';
         return;
       }
 
-      resultsArea.innerHTML = '<div class="empty">正在查詢日文卡片資料...</div>';
-      currentEnglishName = '';
-      currentJapaneseName = '';
+      resultsArea.innerHTML = '<div class="empty">正在查詢卡片資料...</div>';
 
       try {
-        let japaneseKeyword = rawInput;
-
-        if (!isJapaneseText(rawInput)) {
-          currentEnglishName = rawInput;
-          currentJapaneseName = await resolveEnglishToJapaneseName(rawInput);
-          japaneseKeyword = currentJapaneseName;
-          statusEl.textContent = `英文：${rawInput} → 日文：${currentJapaneseName}，正在搜尋日文卡片...`;
+        let cards = [];
+        if (isJapaneseText(rawInput)) {
+          statusEl.textContent = `嘗試以日文名稱搜尋：${rawInput}`;
+          cards = await fetchJapaneseFallback(rawInput);
         } else {
-          currentJapaneseName = rawInput;
-          statusEl.textContent = `正在搜尋日文卡片：${currentJapaneseName}`;
+          statusEl.textContent = `正在搜尋：${rawInput}`;
+          cards = await fetchEnglishCards(`name:${rawInput}`);
         }
 
-        const cards = await fetchJapaneseCardsByName(japaneseKeyword);
+        if (!cards.length && !isJapaneseText(rawInput)) {
+          cards = await fetchEnglishCards(`name:*${rawInput}*`);
+        }
+
         const sorted = sortCards(cards, sortMode.value);
         renderCards(sorted);
-
-        if (currentEnglishName && currentJapaneseName) {
-          statusEl.textContent = `英文：${currentEnglishName} → 日文：${currentJapaneseName}，目前顯示 ${sorted.length} 張日文卡片。`;
-        } else {
-          statusEl.textContent = `搜尋：${currentJapaneseName}，目前顯示 ${sorted.length} 張日文卡片。`;
-        }
+        statusEl.textContent = `目前顯示 ${sorted.length} 張卡片。`;
       } catch (error) {
         statusEl.textContent = '搜尋失敗';
         resultsArea.innerHTML = `
           <div class="empty">
             無法取得資料。<br>
-            可能原因：輸入的英文名稱不是 Pokémon 本體名稱、API 暫時無回應，或目前資料庫沒有結果。<br>
             錯誤訊息：${escapeHtml(error.message || '未知錯誤')}
           </div>
         `;
@@ -797,7 +771,7 @@
     sortMode.addEventListener('change', () => {
       if (!currentCards.length) return;
       renderCards(sortCards(currentCards, sortMode.value));
-      statusEl.textContent = `已重新排序，目前顯示 ${currentCards.length} 張日文卡片。`;
+      statusEl.textContent = `已重新排序，目前顯示 ${currentCards.length} 張卡片。`;
     });
 
     document.querySelectorAll('[data-fill]').forEach(button => {
@@ -810,10 +784,8 @@
       keywordInput.value = '';
       sortMode.value = 'latest';
       currentCards = [];
-      currentEnglishName = '';
-      currentJapaneseName = '';
       statusEl.textContent = '已清空。';
-      resultsArea.innerHTML = '<div class="empty">請輸入日文名稱或英文 Pokémon 名稱。</div>';
+      resultsArea.innerHTML = '<div class="empty">請輸入卡名。</div>';
     });
   </script>
 </body>
