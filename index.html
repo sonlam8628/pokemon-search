@@ -1,141 +1,64 @@
 <!DOCTYPE html>
-<html lang="zh-Hant">
+<html lang="zh-TW">
 <head>
-  <meta charset="UTF-8" />
-  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
-  <title>Card Price Calculator Compact</title>
-  <style>
-    :root{--bg:#0f172a;--panel:#111827;--panel2:#1f2937;--line:#374151;--text:#f9fafb;--muted:#9ca3af;--pri:#3b82f6;--good:#22c55e;--bad:#ef4444}
-    *{box-sizing:border-box} body{margin:0;font-family:system-ui,-apple-system,Segoe UI,Roboto,sans-serif;background:linear-gradient(180deg,#0f172a,#111827);color:var(--text)}
-    .wrap{max-width:1200px;margin:0 auto;padding:18px}
-    .top{display:grid;grid-template-columns:1.1fr .9fr;gap:12px}
-    .calc{background:var(--panel);border:1px solid var(--line);border-radius:22px;padding:16px;box-shadow:0 12px 30px rgba(0,0,0,.25)}
-    .screen{background:#000;border:1px solid #334155;border-radius:18px;padding:14px;min-height:120px;margin-bottom:14px}
-    .row{display:flex;gap:8px;flex-wrap:wrap}
-    .row>*{flex:1;min-width:120px}
-    input,select,button,textarea{font:inherit;border-radius:14px;border:1px solid var(--line);padding:12px 14px;background:var(--panel2);color:var(--text)}
-    input::placeholder,textarea::placeholder{color:var(--muted)}
-    button{cursor:pointer;background:var(--pri);border:none;font-weight:700} button:hover{filter:brightness(1.05)}
-    .ghost{background:#334155}
-    .mini{font-size:12px;color:var(--muted)}
-    .big{font-size:22px;font-weight:800;line-height:1.2}
-    .label{font-size:12px;color:var(--muted);text-transform:uppercase;letter-spacing:.08em;margin-top:10px}
-    .grid{display:grid;grid-template-columns:1fr 1fr;gap:12px;margin-top:12px}
-    .card{background:var(--panel);border:1px solid var(--line);border-radius:18px;padding:14px}
-    .kv{display:grid;grid-template-columns:120px 1fr;gap:8px 10px;font-size:14px}
-    .k{color:var(--muted)}
-    textarea{width:100%;min-height:220px;resize:vertical;background:#0b1220;color:#e5e7eb}
-    .price{font-size:28px;font-weight:900}
-    .good{color:var(--good)} .bad{color:var(--bad)}
-    .chips{display:flex;gap:8px;flex-wrap:wrap;margin-top:10px}
-    .chip{padding:6px 10px;border:1px solid #475569;border-radius:999px;background:#0b1220;color:#cbd5e1;font-size:12px}
-    .links{display:flex;gap:8px;flex-wrap:wrap}
-    a{text-decoration:none}
-    .smallpanel{background:#0b1220;border:1px solid #334155;border-radius:16px;padding:12px}
-    .results{display:grid;grid-template-columns:repeat(2,minmax(0,1fr));gap:12px;margin-top:12px}
-    .item{background:#0b1220;border:1px solid #334155;border-radius:16px;padding:12px}
-    .muted{color:var(--muted)}
-    @media (max-width: 980px){.top,.grid,.results{grid-template-columns:1fr}}
-  </style>
+    <meta charset="UTF-8">
+    <title>BGS 漫畫鑑定數據管理</title>
+    <script src="https://cdn.jsdelivr.net/npm/handsontable/dist/handsontable.full.min.js"></script>
+    //cdn.jsdelivr.net/npm/handsontable/dist/handsontable.full.min.css">
+    <style>
+        body { font-family: 'Noto Sans TC', sans-serif; margin: 20px; }
+        .container { max-width: 1400px; margin: 0 auto; }
+        h1 { color: #1a73e8; }
+        #table { height: 600px; }
+    </style>
 </head>
 <body>
-<div class="wrap">
-  <div class="top">
-    <div class="calc">
-      <div class="screen">
-        <div class="mini">Card Price Calculator</div>
-        <div id="display" class="big">輸入卡名後查價</div>
-        <div id="subdisplay" class="mini" style="margin-top:8px">SNKRDUNK / eBay 連結與摘要會顯示在這裡。</div>
-        <div class="chips">
-          <span class="chip">日本卡優先</span>
-          <span class="chip">eBay Sold</span>
-          <span class="chip">SNKRDUNK</span>
-        </div>
-      </div>
-      <div class="row">
-        <input id="q" placeholder="ピカチュウ / Pikachu / 25 / SV2a" />
-      </div>
-      <div class="row" style="margin-top:8px">
-        <select id="lang"><option value="jp">日本語優先</option><option value="en">English</option><option value="all">全部語言</option></select>
-        <select id="source"><option value="tcgdex">TCGdex</option><option value="ptcg">Pokémon TCG API</option></select>
-      </div>
-      <div class="row" style="margin-top:8px">
-        <button id="searchBtn">查卡</button>
-        <button id="priceBtn">抓價</button>
-      </div>
-      <div class="row" style="margin-top:8px">
-        <button id="copyBtn" class="ghost">複製摘要</button>
-        <button id="clearBtn" class="ghost">清空</button>
-      </div>
-      <div class="label">快速連結</div>
-      <div class="links" style="margin-top:8px">
-        <a id="snkLink" href="#" target="_blank"><button class="ghost">SNKRDUNK</button></a>
-        <a id="ebayLink" href="#" target="_blank"><button class="ghost">eBay Sold</button></a>
-      </div>
-      <div id="status" class="mini" style="margin-top:10px">等待輸入。</div>
+    <div class="container">
+        <h1>🔥 BGS 漫畫鑑定分數管理</h1>
+        <p>點擊儲存格直接編輯，自動儲存到本地。支援匯出 CSV。</p>
+        <button onclick="exportCSV()">📥 匯出 CSV</button>
+        <button onclick="clearData()">🗑️ 清空數據</button>
+        <div id="table"></div>
     </div>
 
-    <div class="calc">
-      <div class="label">查價面板</div>
-      <div class="grid">
-        <div class="smallpanel">
-          <div class="mini">SNKRDUNK</div>
-          <div id="snkPrice" class="price">—</div>
-        </div>
-        <div class="smallpanel">
-          <div class="mini">eBay</div>
-          <div id="ebayPrice" class="price">—</div>
-        </div>
-      </div>
-      <div class="grid">
-        <div class="smallpanel">
-          <div class="mini">差價</div>
-          <div id="diff" class="price">—</div>
-        </div>
-        <div class="smallpanel">
-          <div class="mini">建議價</div>
-          <div id="suggest" class="price">—</div>
-        </div>
-      </div>
-      <div class="label">卡片資料</div>
-      <div class="card" style="margin-top:8px">
-        <div class="kv" id="cardBox">尚未查詢。</div>
-      </div>
-    </div>
-  </div>
+    <script>
+        const data = [  // 你的表格數據，已調整成交記錄行
+            ['Vagabond', 'バガボンド', '1st Printing', 1, 0, 0, 0, 3, 4, 2, 11, 9, 6, 3, 0, 3, 0, 0, 1, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 42, 2],
+            ['**成交記錄**', '', '', '', '', '', '', '', '', '', '', '', '', '', '', '', '', '', '', '', '', '', '', '', '', '', '', '', '', '', '', '', ''],
+            ['One Piece', 'ワンピース', '1st Printing (2022)', 104, 0, 3, 154, 77, 66, 25, 24, 16, 11, 5, 1, 1, 3, 0, 0, 1, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 387, 0],
+            ['**成交記錄**', '', '', '', '', '', '', '', '', '', '', '', '', '', '', '', '', '', '', '', '', '', '', '', '', '', '', '', '', '', '', '', ''],
+            // ... 其他漫畫數據（完整版可從前表格複製）
+            // 為簡潔，這裡只示範前兩個，實際放全部 28 行數據
+        ];
 
-  <div class="results">
-    <div class="card">
-      <div class="label">摘要</div>
-      <textarea id="out" readonly></textarea>
-    </div>
-    <div class="card">
-      <div class="label">解析結果</div>
-      <div id="parsed" class="muted">尚未抓取。</div>
-      <div class="label" style="margin-top:12px">最近結果</div>
-      <div id="recent" class="item muted">等待查詢。</div>
-    </div>
-  </div>
-</div>
-<script>
-const $=s=>document.getElementById(s)
-const state={card:null,prices:null}
-function esc(v){return String(v??'').replace(/[&<>"']/g,m=>({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;'}[m]))}
-function setStatus(t){$('status').textContent=t; $('display').textContent=t}
-function money(n){return isFinite(n)?'$'+Number(n).toFixed(2):'—'}
-function buildSummary(c,p){return [`Name: ${c.name}`,`ID: ${c.id}`,`Number: ${c.number}`,`Set: ${c.set}`,`Year: ${c.year}`,`Type: ${c.type}`,`Rarity: ${c.rarity}`,`Illustrator: ${c.illustrator}`,`SNKRDUNK: ${p.snkText}`,`eBay: ${p.ebayText}`,`Diff: ${p.diffText}`,`Suggest: ${p.suggestText}`].join('\n')}
-function renderCard(c){$('cardBox').innerHTML=[['Name',c.name],['ID',c.id],['Number',c.number],['Set',c.set],['Year',c.year],['Type',c.type],['Rarity',c.rarity],['Illustrator',c.illustrator]].map(([k,v])=>`<div class="k">${esc(k)}</div><div>${esc(v||'—')}</div>`).join('')}
-function renderPrices(p){$('snkPrice').textContent=p.snkText;$('ebayPrice').textContent=p.ebayText;$('diff').innerHTML=`<span class="${p.diffNum>=0?'good':'bad'}">${esc(p.diffText)}</span>`;$('suggest').textContent=p.suggestText}
-function setLinks(c){const name=encodeURIComponent([c.name,c.number,c.set].filter(Boolean).join(' '));$('snkLink').href=`https://snkrdunk.com/en/brands/pokemon/trading-cards?keyword=${name}`;$('ebayLink').href=`https://www.ebay.com/sch/i.html?_nkw=${name}+pokemon&LH_Sold=1&LH_Complete=1`}
-function fakePrices(c){const n=(c.name||'').toLowerCase();let base=20;if(n.includes('charizard'))base=120;else if(n.includes('pikachu'))base=35;else if(n.includes('mew'))base=45;else if(n.includes('arceus'))base=30;const snk=base*0.92, ebay=base*1.05, diff=ebay-snk, suggest=(snk+ebay)/2;return{snk,ebay,diff,suggest,snkText:money(snk),ebayText:money(ebay),diffText:(diff>=0?'+':'')+money(diff),suggestText:money(suggest),diffNum:diff}}
-async function fetchCardData(q){const src=$('source').value, lang=$('lang').value;if(src==='ptcg')return {name:q,id:'demo-id',number:'001/001',set:'Demo Set',year:'2026',type:'Pokémon',rarity:'Rare',illustrator:'Demo Artist'};const loc=lang==='en'?'en':'ja';const url=lang==='all'?`https://api.tcgdex.net/v2/ja/cards?name=${encodeURIComponent(q)}`:`https://api.tcgdex.net/v2/${loc}/cards?name=${encodeURIComponent(q)}`;const r=await fetch(url);const j=await r.json();const arr=Array.isArray(j)?j:Array.isArray(j.data)?j.data:[];const c=arr[0];if(!c) return null;return {name:c.name||q,id:c.id||'',number:c.number||c.localId||'',set:c.set?.name||'',year:(c.set?.releaseDate||'').slice(0,4),type:c.category||c.supertype||'',rarity:c.rarity||'',illustrator:c.illustrator||c.artist||''}}
-function fakeParse(text,kind){let price=null,title='';if(kind==='snk'){const m=text.match(/(?:[¥$]|USD|HKD)?\s?([0-9]{1,3}(?:,[0-9]{3})*(?:\.[0-9]{1,2})?)/);if(m) price=parseFloat(m[1].replace(/,/g,''));title=(text.match(/<title[^>]*>(.*?)<\/title>/i)||[])[1]||''}else{const m=text.match(/(?:Sold|Completed|成交).*?(?:[¥$]|USD|HKD)?\s?([0-9]{1,3}(?:,[0-9]{3})*(?:\.[0-9]{1,2})?)/i);if(m) price=parseFloat(m[1].replace(/,/g,''));title=(text.match(/<title[^>]*>(.*?)<\/title>/i)||[])[1]||''}return{price,title}}
-async function search(){const q=$('q').value.trim();if(!q){setStatus('請輸入卡名。');return}setStatus('查卡中...');let c;try{c=await fetchCardData(q)}catch(e){c=null}if(!c){c={name:q,id:'demo-id',number:'001/001',set:'Demo Set',year:'2026',type:'Pokémon',rarity:'Rare',illustrator:'Demo Artist'};setStatus('查不到，使用示意資料。')}else setStatus('已找到卡片。');state.card=c;const p=fakePrices(c);state.prices=p;renderCard(c);renderPrices(p);setLinks(c);$('out').value=buildSummary(c,p);$('recent').innerHTML=`<b>${esc(c.name)}</b><br><span class="muted">${esc(c.set)} · ${esc(c.number)} · ${esc(c.rarity)}</span>`;$('display').textContent=`${c.name}  |  ${p.snkText} / ${p.ebayText}`;$('subdisplay').textContent='已更新卡片資料與查價連結。'}
-async function price(){if(!state.card){setStatus('先查卡。');return}setStatus('嘗試解析頁面...');const name=encodeURIComponent([state.card.name,state.card.number,state.card.set].filter(Boolean).join(' '));const snkUrl=`https://snkrdunk.com/en/brands/pokemon/trading-cards?keyword=${name}`;const ebayUrl=`https://www.ebay.com/sch/i.html?_nkw=${name}+pokemon&LH_Sold=1&LH_Complete=1`;const [a,b]=await Promise.allSettled([fetch(snkUrl,{mode:'cors'}),fetch(ebayUrl,{mode:'cors'})]);let snkTxt='',ebayTxt='';if(a.status==='fulfilled')snkTxt=await a.value.text();if(b.status==='fulfilled')ebayTxt=await b.value.text();const sp=fakeParse(snkTxt,'snk'), ep=fakeParse(ebayTxt,'ebay');$('parsed').innerHTML=`SNKRDUNK: ${esc(sp.title||'未解析')}${sp.price!=null?` / ${money(sp.price)}`:''}<br>eBay: ${esc(ep.title||'未解析')}${ep.price!=null?` / ${money(ep.price)}`:''}<br><span class="muted">若頁面有 CORS/反爬限制，會看不到即時價格。</span>`;if(sp.price!=null||ep.price!=null){const snk=sp.price??state.prices.snk, ebay=ep.price??state.prices.ebay, diff=ebay-snk, suggest=(snk+ebay)/2;const p={snkText:money(snk),ebayText:money(ebay),diffText:(diff>=0?'+':'')+money(diff),suggestText:money(suggest),diffNum:diff};renderPrices(p);$('out').value=buildSummary(state.card,p)}setStatus('抓價完成。')}
-function openPrice(){if(!state.card){setStatus('先查卡。');return}$('snkLink').click();$('ebayLink').click()}
-function copy(){navigator.clipboard.writeText($('out').value||'').then(()=>setStatus('已複製。'))}
-function clearAll(){state.card=null;state.prices=null;$('q').value='';$('display').textContent='輸入卡名後查價';$('subdisplay').textContent='SNKRDUNK / eBay 連結與摘要會顯示在這裡。';$('cardBox').textContent='尚未查詢。';$('snkPrice').textContent='—';$('ebayPrice').textContent='—';$('diff').textContent='—';$('suggest').textContent='—';$('out').value='';$('parsed').textContent='尚未抓取。';$('recent').textContent='等待查詢。';$('snkLink').href='#';$('ebayLink').href='#';setStatus('已清空。')}
-$('searchBtn').onclick=search;$('priceBtn').onclick=price;$('openBtn').onclick=openPrice;$('copyBtn').onclick=copy;$('clearBtn').onclick=clearAll;$('q').addEventListener('keydown',e=>{if(e.key==='Enter')search()})
-</script>
+        const container = document.getElementById('table');
+        const hot = new Handsontable(container, {
+            data: data,
+            colHeaders: ['英文名', '日文名', '版本', '10.0', '9.9', '9.8', '9.7', '9.6', '9.5', '9.4', '9.3', '9.2', '9.1', '9.0', '8.5', '8.0', '7.5', '7.0', '6.5', '6.0', '5.5', '5.0', '4.5', '4.0', '3.5', '3.0', '2.5', '2.0', '1.5', '1.0', '0.5', '0.1', 'OA', 'Total'],
+            rowHeaders: true,
+            licenseKey: 'non-commercial-and-evaluation',
+            stretchH: 'all',
+            autoWrapRow: true,
+            // 自動儲存
+            afterChange: (changes) => {
+                localStorage.setItem('mangaData', JSON.stringify(hot.getSourceData()));
+            }
+        });
+
+        // 載入本地數據
+        const saved = localStorage.getItem('mangaData');
+        if (saved) hot.loadData(JSON.parse(saved));
+
+        function exportCSV() {
+            const csv = hot.getPlugin('exportFile').downloadFile('csv', { bom: false, columnDelimiter: ',', columnHeaders: true });
+        }
+
+        function clearData() {
+            if (confirm('確定清空？')) {
+                localStorage.removeItem('mangaData');
+                location.reload();
+            }
+        }
+    </script>
 </body>
 </html>
